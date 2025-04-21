@@ -1,4 +1,5 @@
 import pytest
+from datetime import date
 from src.app import compute_filters, build_task
 
 @pytest.mark.parametrize(

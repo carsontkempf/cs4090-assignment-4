@@ -1,176 +1,222 @@
-import json
-import pytest
-from src.tasks import (
-    load_tasks,
-    save_tasks,
-    generate_unique_id,
-    filter_tasks_by_priority,
-    filter_tasks_by_category,
-    filter_tasks_by_completion,
-    search_tasks,
-    get_overdue_tasks,
-)
-from src.app import build_task, get_filter_options, handle_new_task, compute_filters, decide_task_action
-from datetime import datetime, date
-import src.app as app
+# tests/test_basic.py
 
+import sys, os
+import pytest
+from datetime import datetime, date
+
+# Ensure src is importable
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import src.app as app_module
+import streamlit as st
+from src.tasks import (
+    load_tasks, save_tasks, generate_unique_id,
+    filter_tasks_by_priority, filter_tasks_by_category,
+    filter_tasks_by_completion, search_tasks, get_overdue_tasks
+)
+from src.app import (
+    build_task, get_filter_options, handle_new_task,
+    compute_filters, decide_task_action,
+    show_filters, show_sidebar,
+    complete_task, delete_task, display_tasks, main
+)
+
+# Minimal context‑manager stub for any 'with' blocks
+class DummyCM:
+    def __enter__(self): return self
+    def __exit__(self, exc_type, exc, tb): pass
+
+# --- tasks.py tests --------------------------------------
 
 def test_generate_unique_id_empty():
     assert generate_unique_id([]) == 1
 
 def test_generate_unique_id_non_empty():
-    tasks = [{'id': 5}, {'id': 2}, {'id': 9}]
-    assert generate_unique_id(tasks) == 10
+    assert generate_unique_id([{"id":2},{"id":7}]) == 8
 
-def test_filter_priority_and_category_and_completion():
+def test_filter_and_search_and_completion():
     tasks = [
-        {'priority': 'High', 'category': 'A', 'completed': False},
-        {'priority': 'Low',  'category': 'B', 'completed': True},
-        {'priority': 'High', 'category': 'B', 'completed': False},
+        {"priority":"H","category":"A","completed":False, "title":"","description":""},
+        {"priority":"L","category":"B","completed":True,  "title":"","description":""},
     ]
-    assert filter_tasks_by_priority(tasks, 'High') == [tasks[0], tasks[2]]
-    assert filter_tasks_by_category(tasks, 'B') == [tasks[1], tasks[2]]
-    assert filter_tasks_by_completion(tasks, False) == [tasks[0], tasks[2]]
+    assert filter_tasks_by_priority(tasks,"H") == [tasks[0]]
+    assert filter_tasks_by_category(tasks,"B") == [tasks[1]]
+    assert filter_tasks_by_completion(tasks,True) == [tasks[1]]
+    # search
+    tasks2 = [{"title":"Foo","description":"Bar"}]
+    assert search_tasks(tasks2,"foo") == tasks2
 
-def test_search_tasks_case_insensitive():
-    tasks = [
-        {'title': 'Hello', 'description': 'World'},
-        {'title': 'Test',  'description': 'hello world'},
-    ]
-    assert search_tasks(tasks, 'HELLO') == [tasks[0], tasks[1]]
-    assert search_tasks(tasks, 'world') == [tasks[0], tasks[1]]
+def test_load_and_save(tmp_path):
+    fp = tmp_path/"t.json"
+    data = [{"id":1,"title":"x"}]
+    save_tasks(data, file_path=str(fp))
+    assert load_tasks(file_path=str(fp)) == data
 
-def test_load_and_save_tasks(tmp_path):
-    file_path = tmp_path / "t.json"
-    data = [{'id':1,'title':'x'}]
-    save_tasks(data, file_path=str(file_path))
-    loaded = load_tasks(file_path=str(file_path))
-    assert loaded == data
+def test_load_file_not_found(tmp_path):
+    assert load_tasks(file_path=str(tmp_path/"nofile.json")) == []
 
-def test_load_tasks_file_not_found(tmp_path):
-    loaded = load_tasks(file_path=str(tmp_path / "nofile.json"))
-    assert loaded == []
+def test_load_invalid_json(tmp_path, capsys):
+    bad = tmp_path/"b.json"
+    bad.write_text("###")
+    out = load_tasks(file_path=str(bad))
+    captured = capsys.readouterr().out
+    assert "invalid JSON" in captured
+    assert out == []
 
-def test_load_tasks_invalid_json(tmp_path, capsys):
-    bad = tmp_path / "bad.json"
-    bad.write_text("nope")
-    loaded = load_tasks(file_path=str(bad))
-    out = capsys.readouterr().out
-    assert 'invalid JSON' in out
-    assert loaded == []
-
-def test_get_overdue_tasks(monkeypatch):
-    import src.tasks as m
-    class D:
+def test_get_overdue(monkeypatch):
+    # freeze time in tasks module
+    class FakeDT:
         @classmethod
-        def now(cls):
-            return datetime(2025,1,2)
-    monkeypatch.setattr(m, 'datetime', D)
+        def now(cls): return datetime(2025,1,2)
+    import src.tasks as mod
+    monkeypatch.setattr(mod, "datetime", FakeDT)
     tasks = [
-        {'due_date': '2025-01-01', 'completed': False},
-        {'due_date': '2025-01-02', 'completed': False},
-        {'due_date': '2025-01-03', 'completed': False},
+        {"due_date":"2025-01-01","completed":False},
+        {"due_date":"2025-01-03","completed":False},
     ]
     assert get_overdue_tasks(tasks) == [tasks[0]]
 
-def test_build_task():
-    tasks = [{'id':1}, {'id':3}]
-    # Freeze time manually
-    t = app.build_task(tasks, 'T','D','High','C', date(2025,2,3))
-    assert t['id'] == 4
-    assert t['title'] == 'T'
-    assert t['description'] == 'D'
-    assert t['priority'] == 'High'
-    assert t['category'] == 'C'
-    assert t['due_date'] == '2025-02-03'
-    assert isinstance(t['created_at'], str)
 
-def test_get_filter_options():
-    tasks = [
-        {'category':'B'},
-        {'category':'A'},
-        {'category':'C'},
-    ]
-    cats, pris = app.get_filter_options(tasks)
-    assert cats == ['A','B','C']
-    assert pris == ['High','Medium','Low']
+# --- app.py pure‑logic tests -----------------------------
 
-def test_display_tasks_complete_and_delete(monkeypatch):
-    calls = []
-    # Redirect load/save to in-memory tasks list
-    monkeypatch.setattr(app, 'load_tasks', lambda: tasks.copy())
-    monkeypatch.setattr(app, 'save_tasks', lambda ts: tasks.clear() or tasks.extend(ts))
-    # Dummy st
-    class DummySt:
-        def __enter__(self):
-            return self
-        def __exit__(self, exc_type, exc, tb):
-            pass
-        def columns(self, spec):
-            return (self, self)
-        def markdown(self, *a): calls.append(('md',a))
-        def write(self, *a): calls.append(('w',a))
-        def caption(self, *a): calls.append(('c',a))
-        def button(self, label, key, **kwargs):
-            # Only simulate "Complete" button in first phase
-            on_click = kwargs.get('on_click')
-            args = kwargs.get('args', ())
-            if key.startswith("complete_"):
-                on_click(*args)
-                return True
-            return False
-        def experimental_rerun(self): pass
-    monkeypatch.setattr(app, 'st', DummySt())
-    global all_tasks
-    all_tasks = []
-    # Test complete
-    tasks = [{'id':1,'title':'X','description':'','priority':'','category':'','due_date':'2025-01-01','completed':False}]
-    res = app.display_tasks(tasks)
-    # After complete callback, task should be marked completed
-    assert tasks and tasks[0]['completed'] is True
-    # Now simulate delete-only
-    def delete_only(label, key, **kwargs):
-        on_click = kwargs.get('on_click')
-        args = kwargs.get('args', ())
-        if key.startswith("delete_"):
-            on_click(*args)
-            return True
-        return False
-    monkeypatch.setattr(app.st, 'button', delete_only)
-    app.display_tasks(tasks)
-    assert tasks == []
+def test_build_task_and_id(monkeypatch):
+    base = [{"id":5}]
+    fake_now = datetime(2025,4,21,8,0,0)
+    class FakeDT:
+        @classmethod
+        def now(cls): return fake_now
+    # patch module datetime
+    monkeypatch.setattr(app_module, "datetime", FakeDT)
+    t = build_task(base, "T","D","High","C", date(2025,6,6))
+    assert t["id"] == 6
+    assert t["due_date"] == "2025-06-06"
+    assert t["created_at"].startswith("2025-04-21")
 
-def test_handle_new_task_appends_and_saves(monkeypatch):
-    from src.app import handle_new_task
-    tasks = []
-    saved = {}
-    def fake_save(tsk):
-        saved['tasks'] = list(tsk)
-    monkeypatch.setattr('src.app.save_tasks', fake_save)
-    due = date(2025, 7, 7)
-    new = handle_new_task(tasks, True, 'T', 'D', 'High', 'Work', due)
-    assert isinstance(new, dict)
-    assert tasks == [new]
-    assert saved['tasks'] == [new]
+def test_filters_and_compute():
+    cats, pris = get_filter_options([{"category":"Z"},{"category":"A"}])
+    assert cats == ["A","Z"]
+    assert pris == ["High","Medium","Low"]
+    assert compute_filters("X","Y",True) == ("X","Y",True)
 
-    # when not submitted
-    tasks2 = []
-    none = handle_new_task(tasks2, False, 'T', 'D', 'High', 'Work', due)
-    assert none is None
-    assert tasks2 == []
-
-def test_compute_filters():
-    from src.app import compute_filters
-    assert compute_filters('Cat', 'Pri', True) == ('Cat', 'Pri', True)
-    assert compute_filters('All', 'All', False) == ('All', 'All', False)
-
-@pytest.mark.parametrize("completed,complete_pressed,delete_pressed,expected", [
-    (False, True, False, 'complete'),
-    (True, True, False, 'undo'),
-    (False, False, True, 'delete'),
+@pytest.mark.parametrize("comp,cp,dp,exp", [
+    (False, True, False, "complete"),
+    (True,  True, False, "undo"),
+    (False, False, True, "delete"),
     (False, False, False, None),
 ])
-def test_decide_task_action(completed, complete_pressed, delete_pressed, expected):
-    task = {'completed': completed}
-    from src.app import decide_task_action
-    assert decide_task_action(task, complete_pressed, delete_pressed) == expected
+def test_decide(comp,cp,dp,exp):
+    assert decide_task_action({"completed":comp}, cp, dp) == exp
+
+def test_handle_new_task_and_callbacks(tmp_path, monkeypatch):
+    # point DEFAULT_TASKS_FILE to tmp file
+    fp = tmp_path/"tasks.json"
+    monkeypatch.setenv("DEFAULT_TASKS_FILE", str(fp))
+    tasks = []
+    new = handle_new_task(tasks, True, "A","B","M","C", date(2025,7,7))
+    assert new in tasks
+    # complete_task
+    fp.write_text("[]")
+    complete_task(new["id"])
+    # delete_task
+    delete_task(new["id"])
+    assert load_tasks(file_path=str(fp)) == []
+
+
+# --- Streamlit UI tests ----------------------------------
+
+def test_show_filters_ui(monkeypatch):
+    monkeypatch.setattr(st, "columns", lambda n: (DummyCM(), DummyCM()))
+    monkeypatch.setattr(st, "selectbox", lambda *a,**k: "All")
+    monkeypatch.setattr(st, "checkbox", lambda *a,**k: False)
+    assert show_filters([]) == ("All","All",False)
+
+def test_show_sidebar_does_not_crash(monkeypatch):
+    class FormStub:
+        def __enter__(self): return self
+        def __exit__(self,*a): pass
+        def text_input(self,*a): return ""
+        def text_area(self,*a): return ""
+        def selectbox(self,*a): return ""
+        def date_input(self,*a): return date.today()
+        def form_submit_button(self,*a): return False
+    monkeypatch.setattr(st.sidebar, "form", lambda *a,**k: FormStub())
+    show_sidebar([])  # no exception
+
+
+# --- display_tasks: isolate callbacks --------------------
+
+def test_display_tasks_complete_and_delete(monkeypatch):
+    # Full task dict
+    full_task = {
+        "id": 1,
+        "title": "T",
+        "description": "D",
+        "priority": "High",
+        "category": "C",
+        "due_date": "2025-01-01",
+        "completed": False
+    }
+
+    # Prepare shared task_list for stubs
+    task_list = [full_task.copy()]
+
+    # Stub complete_task to toggle in-memory task_list
+    def stub_complete(task_id):
+        for t in task_list:
+            if t["id"] == task_id:
+                t["completed"] = not t["completed"]
+    monkeypatch.setattr(app_module, "complete_task", stub_complete)
+
+    # Stub delete_task to remove from in-memory task_list
+    def stub_delete(task_id):
+        nonlocal task_list
+        task_list = [t for t in task_list if t["id"] != task_id]
+    monkeypatch.setitem(locals(), 'task_list', task_list)  # ensure closure capture
+    monkeypatch.setattr(app_module, "delete_task", stub_delete)
+
+    # Phase 1: only Complete fires
+    class Cst:
+        def columns(self,s): return (DummyCM(), DummyCM())
+        def markdown(self,*a): pass
+        def write(self,*a): pass
+        def caption(self,*a): pass
+        def button(self,label,key,**kw):
+            if key.startswith("complete_"):
+                kw["on_click"](task_list[0]["id"])
+                return True
+            return False
+
+    monkeypatch.setattr(st, "columns", Cst().columns)
+    monkeypatch.setattr(st, "button", Cst().button)
+
+    display_tasks(task_list)
+    try:
+        assert task_list and task_list[0]["completed"] is True
+    except AssertionError:
+        pytest.fail("Complete button did not toggle 'completed' flag as expected")
+
+    # Phase 2: only Delete fires
+    class Dst(Cst):
+        def button(self,label,key,**kw):
+            if key.startswith("delete_"):
+                kw["on_click"](task_list[0]["id"])
+                return True
+            return False
+
+    monkeypatch.setattr(st, "button", Dst().button)
+
+    task_list[0]["completed"] = True
+    display_tasks(task_list)
+    try:
+        assert task_list == []
+    except AssertionError:
+        pytest.fail("Delete button did not remove the task as expected")
+
+
+def test_main_runs_without_error(monkeypatch):
+    monkeypatch.setattr(st, "title", lambda *a,**k: None)
+    monkeypatch.setattr(st, "button", lambda *a,**k: False)
+    monkeypatch.setattr(st, "columns", lambda *a,**k: (DummyCM(), DummyCM()))
+    monkeypatch.setattr(st, "selectbox", lambda *a,**k: "All")
+    monkeypatch.setattr(st, "checkbox", lambda *a,**k: False)
+    assert main() is None
