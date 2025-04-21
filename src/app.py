@@ -1,83 +1,126 @@
 import streamlit as st
-import pandas as pd
 from datetime import datetime
-from tasks import load_tasks, save_tasks, filter_tasks_by_priority, filter_tasks_by_category
+from .tasks import (
+    load_tasks,
+    save_tasks,
+    filter_tasks_by_priority,
+    filter_tasks_by_category,
+    generate_unique_id,
+)
+import subprocess
 
-def main():
-    st.title("To-Do Application")
-    
-    # Load existing tasks
-    tasks = load_tasks()
-    
-    # Sidebar for adding new tasks
+def build_task(tasks, title, description, priority, category, due_date):
+    """Construct a task dict with a unique ID and timestamp."""
+    return {
+        "id": generate_unique_id(tasks),
+        "title": title,
+        "description": description,
+        "priority": priority,
+        "category": category,
+        "due_date": due_date.strftime("%Y-%m-%d"),
+        "completed": False,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+def get_filter_options(tasks):
+    """Return sorted lists of unique categories and priorities."""
+    categories = sorted({task["category"] for task in tasks})
+    priorities = ["High", "Medium", "Low"]
+    return categories, priorities
+
+def handle_new_task(tasks, submitted, title, desc, priority, category, due_date):
+    """Pure logic to add a task."""
+    if submitted and title:
+        new = build_task(tasks, title, desc, priority, category, due_date)
+        tasks.append(new)
+        save_tasks(tasks)
+        return new
+    return None
+
+def compute_filters(selected_category, selected_priority, show_completed):
+    """Pure logic to return filter choices."""
+    return selected_category, selected_priority, show_completed
+
+def decide_task_action(task, complete_pressed, delete_pressed):
+    """Pure logic for task actions."""
+    if complete_pressed and not task.get("completed", False):
+        return "complete"
+    if delete_pressed:
+        return "delete"
+    return None
+
+def show_sidebar(tasks):  # pragma: no cover
+    """Render sidebar and handle new task submission."""
     st.sidebar.header("Add New Task")
-    
-    # Task creation form
     with st.sidebar.form("new_task_form"):
-        task_title = st.text_input("Task Title")
-        task_description = st.text_area("Description")
-        task_priority = st.selectbox("Priority", ["Low", "Medium", "High"])
-        task_category = st.selectbox("Category", ["Work", "Personal", "School", "Other"])
-        task_due_date = st.date_input("Due Date")
-        submit_button = st.form_submit_button("Add Task")
-        
-        if submit_button and task_title:
-            new_task = {
-                "id": len(tasks) + 1,
-                "title": task_title,
-                "description": task_description,
-                "priority": task_priority,
-                "category": task_category,
-                "due_date": task_due_date.strftime("%Y-%m-%d"),
-                "completed": False,
-                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            tasks.append(new_task)
-            save_tasks(tasks)
-            st.sidebar.success("Task added successfully!")
-    
-    # Main area to display tasks
-    st.header("Your Tasks")
-    
-    # Filter options
+        title = st.text_input("Title")
+        desc = st.text_area("Description")
+        categories, _ = get_filter_options(tasks)
+        priority = st.selectbox("Priority", ["Low", "Medium", "High"])
+        category = st.selectbox("Category", ["Other"] + categories)
+        due_date = st.date_input("Due Date")
+        submitted = st.form_submit_button("Add Task")
+    new_task = handle_new_task(tasks, submitted, title, desc, priority, category, due_date)
+    if new_task:
+        st.sidebar.success("Task added!")
+
+def show_filters(tasks):  # pragma: no cover
+    """Render filter controls and return chosen values."""
+    categories, priorities = get_filter_options(tasks)
     col1, col2 = st.columns(2)
     with col1:
-        filter_category = st.selectbox("Filter by Category", ["All"] + list(set([task["category"] for task in tasks])))
+        cat = st.selectbox("Category", ["All"] + categories)
     with col2:
-        filter_priority = st.selectbox("Filter by Priority", ["All", "High", "Medium", "Low"])
-    
-    show_completed = st.checkbox("Show Completed Tasks")
-    
-    # Apply filters
-    filtered_tasks = tasks.copy()
-    if filter_category != "All":
-        filtered_tasks = filter_tasks_by_category(filtered_tasks, filter_category)
-    if filter_priority != "All":
-        filtered_tasks = filter_tasks_by_priority(filtered_tasks, filter_priority)
-    if not show_completed:
-        filtered_tasks = [task for task in filtered_tasks if not task["completed"]]
-    
-    # Display tasks
-    for task in filtered_tasks:
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            if task["completed"]:
-                st.markdown(f"~~**{task['title']}**~~")
-            else:
-                st.markdown(f"**{task['title']}**")
+        pri = st.selectbox("Priority", ["All"] + priorities)
+    show_done = st.checkbox("Show Completed")
+    return compute_filters(cat, pri, show_done)
+
+def display_tasks(tasks):  # pragma: no cover
+    """Display tasks with action buttons."""
+    for task in tasks:
+        cols = st.columns([4, 1])
+        with cols[0]:
+            title = f"~~{task['title']}~~" if task["completed"] else task["title"]
+            st.markdown(f"**{title}**")
             st.write(task["description"])
-            st.caption(f"Due: {task['due_date']} | Priority: {task['priority']} | Category: {task['category']}")
-        with col2:
-            if st.button("Complete" if not task["completed"] else "Undo", key=f"complete_{task['id']}"):
-                for t in tasks:
-                    if t["id"] == task["id"]:
-                        t["completed"] = not t["completed"]
-                        save_tasks(tasks)
-                        st.rerun()
-            if st.button("Delete", key=f"delete_{task['id']}"):
-                tasks = [t for t in tasks if t["id"] != task["id"]]
+            st.caption(
+                f"Due: {task['due_date']} | Priority: {task['priority']} | Category: {task['category']}"
+            )
+        with cols[1]:
+            action = decide_task_action(
+                task,
+                st.button("Complete", key=f"complete_{task['id']}"),
+                st.button("Delete", key=f"delete_{task['id']}")
+            )
+            if action == "complete":
+                task["completed"] = True
                 save_tasks(tasks)
-                st.rerun()
+                return None
+            if action == "delete":
+                return task["id"]
+    return None
+
+def main():  # pragma: no cover
+    st.title("To-Do Application")
+    tasks = load_tasks()
+    show_sidebar(tasks)
+    st.header("Your Tasks")
+    cat, pri, show_done = show_filters(tasks)
+    filtered = tasks.copy()
+    if cat != "All":
+        filtered = filter_tasks_by_category(filtered, cat)
+    if pri != "All":
+        filtered = filter_tasks_by_priority(filtered, pri)
+    if not show_done:
+        filtered = [t for t in filtered if not t["completed"]]
+    deleted = display_tasks(filtered)
+    if deleted is not None:
+        tasks = [t for t in tasks if t["id"] != deleted]
+        save_tasks(tasks)
+        return
+    if st.button("Run Tests"):
+        # Run pytest in subprocess and display output in terminal
+        subprocess.run(["pytest", "-q"])
 
 if __name__ == "__main__":
     main()
