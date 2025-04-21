@@ -53,7 +53,11 @@ You must implement and document the following types of tests:
 - [x] Provide before/after evidence of fixes
 
 ### 3. Pytest Features (20 points)
-- [ ] Do different pytest features: pytest-cov, Parameterization, mocking, report-generation in html,
+- [ ] Do different pytest features:
+- [x]  pytest-cov
+- [ ]  Parameterization
+- [ ]  mocking
+- [ ]  report-generation in html
 - [ ] Have separate streamlit button for each functionalities. On button press it runs the specific test
 
 ### 4. Do Test-Driven Development (TDD)  (20 points)

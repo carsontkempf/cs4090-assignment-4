@@ -1,9 +1,9 @@
 import sys
 import os
-# Ensure project root is on sys.path so 'src' package can be imported
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import subprocess
 import streamlit as st
 from datetime import datetime
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.tasks import (
     load_tasks,
     save_tasks,
@@ -11,7 +11,7 @@ from src.tasks import (
     filter_tasks_by_category,
     generate_unique_id,
 )
-import subprocess
+from tests import *
 
 def build_task(tasks, title, description, priority, category, due_date):
     """Construct a task dict with a unique ID and timestamp."""
@@ -129,8 +129,18 @@ def main():  # pragma: no cover
 
     display_tasks(filtered)
 
-    if st.button("Run Tests"):
+    if st.button("Run Unit Tests"):
         subprocess.run(["pytest", "-q"])
+    if st.button("Run Coverage"):
+        subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
+        st.markdown("[View Coverage Report](htmlcov/index.html)")
+    if st.button("Run Param Tests"):
+        subprocess.run(["pytest", "tests/test_param.py", "-q"])
+    if st.button("Run Mock Tests"):
+        subprocess.run(["pytest", "tests/test_mock.py", "-q"])
+    if st.button("Run HTML Report"):
+        subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
+        st.markdown("[View HTML Report](report.html)")
 
 if __name__ == "__main__":
     main()
