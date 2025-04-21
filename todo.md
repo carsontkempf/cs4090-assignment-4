@@ -36,7 +36,7 @@ The application allows users to:
    ```
 - [x] Explore the Application  
    - [x] Familiarize yourself with all features
-   - [ ] Take notes on initial observations
+   - [x] Take notes on initial observations
 
 ## Testing Requirements
 You must implement and document the following types of tests:
@@ -53,7 +53,7 @@ You must implement and document the following types of tests:
 - [ ] Provide before/after evidence of fixes
 
 ### 3. Pytest Features (20 points)
-- [ ] Do different pytest features: pytest-cov, Parameterization, mocking, report-generation in html,)
+- [ ] Do different pytest features: pytest-cov, Parameterization, mocking, report-generation in html,
 - [ ] Have separate streamlit button for each functionalities. On button press it runs the specific test
 
 ### 4. Do Test-Driven Development (TDD)  (20 points)

@@ -1,6 +1,10 @@
+import sys
+import os
+# Ensure project root is on sys.path so 'src' package can be imported
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import streamlit as st
 from datetime import datetime
-from .tasks import (
+from src.tasks import (
     load_tasks,
     save_tasks,
     filter_tasks_by_priority,
