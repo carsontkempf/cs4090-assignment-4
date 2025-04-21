@@ -97,6 +97,9 @@ def test_get_filter_options():
 
 def test_display_tasks_complete_and_delete(monkeypatch):
     calls = []
+    # Redirect load/save to in-memory tasks list
+    monkeypatch.setattr(app, 'load_tasks', lambda: tasks.copy())
+    monkeypatch.setattr(app, 'save_tasks', lambda ts: tasks.clear() or tasks.extend(ts))
     # Dummy st
     class DummySt:
         def __enter__(self):
@@ -108,9 +111,14 @@ def test_display_tasks_complete_and_delete(monkeypatch):
         def markdown(self, *a): calls.append(('md',a))
         def write(self, *a): calls.append(('w',a))
         def caption(self, *a): calls.append(('c',a))
-        def button(self, label, key):
-            # Simulate pressing the "Complete" button only
-            return label.startswith("Complete")
+        def button(self, label, key, **kwargs):
+            # Only simulate "Complete" button in first phase
+            on_click = kwargs.get('on_click')
+            args = kwargs.get('args', ())
+            if key.startswith("complete_"):
+                on_click(*args)
+                return True
+            return False
         def experimental_rerun(self): pass
     monkeypatch.setattr(app, 'st', DummySt())
     global all_tasks
@@ -118,15 +126,19 @@ def test_display_tasks_complete_and_delete(monkeypatch):
     # Test complete
     tasks = [{'id':1,'title':'X','description':'','priority':'','category':'','due_date':'2025-01-01','completed':False}]
     res = app.display_tasks(tasks)
-    assert tasks[0]['completed'] is True
-    # Test delete
-    calls.clear()
-    tasks[0]['completed'] = True
-    def btn(label, key):
-        return label.startswith("Delete")
-    monkeypatch.setattr(app.st, 'button', btn)
-    res2 = app.display_tasks(tasks)
-    assert res2 == 1
+    # After complete callback, task should be marked completed
+    assert tasks and tasks[0]['completed'] is True
+    # Now simulate delete-only
+    def delete_only(label, key, **kwargs):
+        on_click = kwargs.get('on_click')
+        args = kwargs.get('args', ())
+        if key.startswith("delete_"):
+            on_click(*args)
+            return True
+        return False
+    monkeypatch.setattr(app.st, 'button', delete_only)
+    app.display_tasks(tasks)
+    assert tasks == []
 
 def test_handle_new_task_appends_and_saves(monkeypatch):
     from src.app import handle_new_task
@@ -154,7 +166,7 @@ def test_compute_filters():
 
 @pytest.mark.parametrize("completed,complete_pressed,delete_pressed,expected", [
     (False, True, False, 'complete'),
-    (True, True, False, None),
+    (True, True, False, 'undo'),
     (False, False, True, 'delete'),
     (False, False, False, None),
 ])

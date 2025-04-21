@@ -48,9 +48,9 @@ You must implement and document the following types of tests:
 - [x] Have a streamlit button. On button press it runs the tests
 
 ### 2. Bug Reporting and Fixing (20 points)
-- [ ] Document all bugs found using a standard bug report format
-- [ ] Fix all bugs you've identified
-- [ ] Provide before/after evidence of fixes
+- [x] Document all bugs found using a standard bug report format
+- [x] Fix all bugs you've identified
+- [x] Provide before/after evidence of fixes
 
 ### 3. Pytest Features (20 points)
 - [ ] Do different pytest features: pytest-cov, Parameterization, mocking, report-generation in html,

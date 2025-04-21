@@ -7,7 +7,7 @@
 * No built‑in button or mechanism to run tests from the Streamlit app.
 * Business logic (task creation and filtering) was mixed directly into UI code, making unit testing difficult.
 
-
+---
 
 # Unit Testing Coverage and Refactoring Summary
 
@@ -45,72 +45,64 @@ This systematic refactor and focused testing allowed us to surpass the 90% cover
 
   ---
 
+## Bug Reports
 
-# To-Do App Bug Report
-
-### Bug 001: Duplicate Task IDs on Deletion  
-**Summary:** New tasks use `id = len(tasks) + 1`, so deleting a task can produce duplicate IDs.  
-**Location:** `app.py`, sidebar form block  
-**Cause:** Length‑based ID assignment  
+### Bug 1: Completing task under filter overwrites all tasks
+**Description:** When marking a task as complete while filters are applied, only the filtered subset is saved back to `tasks.json`, causing other tasks to be lost.  
 **Steps to Reproduce:**  
-1. Add tasks → IDs 1, 2, 3  
-2. Delete task 2  
-3. Add a new task → ID = 3 (collision)  
-**Expected:** ID = max existing ID + 1 (i.e. 4)  
-**Severity:** Major  
+1. Add at least two tasks in different categories.  
+![](images/2025-04-21-16-17-28.png)
+2. Apply a category filter so only one task is visible.  
+![](images/2025-04-21-16-18-03.png)
+3. Click “Complete” on the visible task.
+![](images/2025-04-21-16-18-42.png)
+4. Reopen the app or inspect `tasks.json`. 
+![](images/2025-04-21-16-19-12.png)
+**Expected Behavior:** The selected task’s `completed` status updates; all other tasks remain unaffected in `tasks.json`.  
+**Actual Behavior:** `tasks.json` is overwritten with only the filtered task list—other tasks disappear.  
+**Severity:** High
 
-### Bug 002: Inconsistent Module Import Paths  
-**Summary:** `app.py` imports `tasks`, but tests import `src.tasks`, causing import errors.  
-**Location:** `app.py` vs. `tests/test_basic.py`  
-**Cause:** Mixed module paths  
-**Steps to Reproduce:** Run `pytest` → ImportError/NameError  
-**Expected:** Single consistent import path  
-**Severity:** Critical  
+### Bug 2: Undo complete not available
+**Description:** The UI button always reads “Complete” and the logic never supports toggling a completed task back to incomplete.  
+**Steps to Reproduce:**  
+1. Add a task. 
+![](images/2025-04-21-16-20-16.png)
+2. Click “Complete” on that task.  
+![](images/2025-04-21-16-20-55.png)
+3. Try to undo by clicking the same button again.  
+**Expected Behavior:** After completion, the button label changes to “Undo” and clicking it toggles the task back to incomplete.  
+**Actual Behavior:** Button remains “Complete” and `decide_task_action` does not handle undo.  
 
-### Bug 003: UI Not Refreshing After Adding Task  
-**Summary:** After adding a task, list doesn’t update until manual reload.  
-**Location:** `app.py` after `save_tasks`  
-**Cause:** Missing `st.rerun()` on form submit  
-**Steps to Reproduce:** Add task → list unchanged  
-**Expected:** Automatic rerun to show new task  
-**Severity:** Medium  
+**Severity:** Medium
 
-### Bug 004: JSON Decode Warning Not Shown in UI  
-**Summary:** Corrupted `tasks.json` prints warning to console, not visible in Streamlit UI.  
-**Location:** `tasks.py` in `except JSONDecodeError`  
-**Cause:** Uses `print()` instead of `st.error()` or logger  
-**Steps to Reproduce:** Corrupt JSON → run app → no user-visible error  
-**Expected:** UI error message  
-**Severity:** Low  
+### Bug 3: Button actions require double click
+**Description:** Button clicks (“Complete”, “Undo”, “Delete”) do not register on the first press; the user must click twice for action to execute.  
+**Steps to Reproduce:**  
+1. Launch app with tasks visible.  
+2. Click “Complete” on a task once — nothing happens.  
+![](images/2025-04-21-16-34-22.png)
+3. Click “Complete” a second time — task completes.  
+![](images/2025-04-21-16-34-43.png)
+4. The same behavior applies to “Undo” and “Delete” buttons.  
+**Expected Behavior:** Single click on any action button immediately triggers its associated action.  
+**Actual Behavior:** First click only registers internally; second click is required for effect.  
+**Severity:** Medium
 
-### Bug 005: Relative Tasks File Path  
-**Summary:** `tasks.json` path is relative; running Streamlit from another CWD writes files in wrong place.  
-**Location:** `tasks.py`, `DEFAULT_TASKS_FILE = "tasks.json"`  
-**Cause:** No absolute or project‑relative resolution  
-**Steps to Reproduce:** `cd` elsewhere → `streamlit run path/to/app.py` → JSON created in CWD  
-**Expected:** Fixed project‑relative path  
-**Severity:** Low  
+## Bug Fixes
 
-### Bug 006: Overdue‑Date Comparison via Strings  
-**Summary:** `get_overdue_tasks` compares date strings lexically; fragile if format changes.  
-**Location:** `tasks.py` in `get_overdue_tasks`  
-**Cause:** Using `strftime` and string comparison instead of `datetime` objects  
-**Steps to Reproduce:** Change stored date format → overdue check fails  
-**Expected:** Parse strings into `datetime` and compare  
-**Severity:** Low  
+### Fix for Bug 1: Completing task under filter overwrites all tasks  
+Refactored `display_tasks` logic to load and save the full task list instead of the filtered subset, ensuring all tasks persist across filter-based actions.
+![](images/2025-04-21-16-32-23.png)
+![](images/2025-04-21-16-32-54.png)
+![](images/2025-04-21-16-33-20.png)
 
-### Bug 007: Unused `os` Import  
-**Summary:** `import os` in `tasks.py` is never used.  
-**Location:** Top of `tasks.py`  
-**Cause:** Dead code  
-**Steps to Reproduce:** Run linter → warning  
-**Expected:** Remove unused import  
-**Severity:** Trivial  
+### Fix for Bug 2: Undo complete not available  
+Updated `decide_task_action` to handle “undo” state and modified `display_tasks` to toggle `completed=False` when “Undo” is clicked, providing toggle functionality.
+![](images/2025-04-21-16-31-01.png)
+![](images/2025-04-21-16-31-26.png)
 
-### Bug 008: Category Filter Order Unpredictable  
-**Summary:** Dropdown uses `list(set(...))`, which yields arbitrary order.  
-**Location:** `app.py` filter section  
-**Cause:** Python set is unordered  
-**Steps to Reproduce:** Add multiple categories → open filter dropdown → order varies  
-**Expected:** Alphabetical or insertion order  
-**Severity:** Minor  
+### Fix for Bug 3: Button actions require double click  
+Removed redundant state reset in Streamlit after each action; replaced `return None` inside `display_tasks` with `st.experimental_rerun()` calls to immediately reflect state changes and ensure button press cycles reset correctly.
+![](images/2025-04-21-16-51-38.png)
+
+
