@@ -5,7 +5,7 @@ from datetime import datetime
 # File path for task storage
 DEFAULT_TASKS_FILE = "tasks.json"
 
-def load_tasks(file_path=DEFAULT_TASKS_FILE):
+def load_tasks(file_path=None):
     """
     Load tasks from a JSON file.
     
@@ -15,6 +15,8 @@ def load_tasks(file_path=DEFAULT_TASKS_FILE):
     Returns:
         list: List of task dictionaries, empty list if file doesn't exist
     """
+    if file_path is None:
+        file_path = DEFAULT_TASKS_FILE
     try:
         with open(file_path, "r") as f:
             return json.load(f)
@@ -28,7 +30,7 @@ def load_tasks(file_path=DEFAULT_TASKS_FILE):
             json.dump([], fw, indent=2)
         return []
 
-def save_tasks(tasks, file_path=DEFAULT_TASKS_FILE):
+def save_tasks(tasks, file_path=None):
     """
     Save tasks to a JSON file.
     
@@ -36,6 +38,8 @@ def save_tasks(tasks, file_path=DEFAULT_TASKS_FILE):
         tasks (list): List of task dictionaries
         file_path (str): Path to save the JSON file
     """
+    if file_path is None:
+        file_path = DEFAULT_TASKS_FILE
     with open(file_path, "w") as f:
         json.dump(tasks, f, indent=2)
 

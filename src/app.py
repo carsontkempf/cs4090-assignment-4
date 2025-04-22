@@ -216,6 +216,9 @@ def run_html_report():
     subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
     st.markdown("[View HTML Report](report.html)")
 
+def run_bdd_tests():
+    subprocess.run(["pytest", "-q", "tests/feature"])
+
 def main():  # pragma: no cover
     # Ensure edit_id exists in session_state for non-dict session_state
     if not hasattr(st.session_state, "edit_id"):
@@ -305,10 +308,12 @@ def main():  # pragma: no cover
         if st.button("Run HTML Report", key="legacy_html"):
             subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
             st.markdown("[View HTML Report](report.html)")
+        if st.button("Run BDD Tests", key="legacy_bdd_tests"):
+            subprocess.run(["pytest", "-q", "tests/feature"])
 
     try:
-        cols = st.columns(5)
-        col_u, col_c, col_p, col_m, col_h = cols
+        cols = st.columns(6)
+        col_u, col_c, col_p, col_m, col_h, col_b = cols
     except ValueError:
         pass
     else:
@@ -322,6 +327,9 @@ def main():  # pragma: no cover
             run_mock = st.checkbox("Mock Tests", key="chk_mock", value=True)
         with col_h:
             run_html = st.checkbox("HTML Report", key="chk_html", value=True)
+        with col_b:
+            run_bdd = st.checkbox("BDD Tests", key="chk_bdd", value=True)
+
         if st.button("Run Selected Tests"):
             if run_unit:
                 run_unit_tests()
@@ -333,6 +341,8 @@ def main():  # pragma: no cover
                 run_mock_tests()
             if run_html:
                 run_html_report()
+            if run_bdd:
+                run_bdd_tests()
 
 if __name__ == "__main__":
     # Always delegate to src.app.main so test monkeypatch applies

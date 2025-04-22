@@ -275,10 +275,12 @@ def test_run_helpers(monkeypatch):
     app_module.run_mock_tests()
     app_module.run_cov_tests()
     app_module.run_html_report()
+    app_module.run_bdd_tests()
     assert ["pytest", "-q"] in ran
     assert ["pytest", "tests/test_advanced.py", "-q"] in ran
     assert ["pytest", "--cov=src", "--cov-report=html", "-q"] in ran
     assert ["pytest", "--html=report.html", "--self-contained-html", "-q"] in ran
+    assert ["pytest", "-q", "tests/feature"] in ran
     assert any("View Coverage Report" in m for m in md)
     assert any("View HTML Report" in m for m in md)
 

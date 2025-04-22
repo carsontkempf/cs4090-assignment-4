@@ -233,5 +233,89 @@ Removed redundant state reset in Streamlit after each action; replaced `return N
 ### Features Working
 ![](images/2025-04-22-16-19-20.png)
 
+## Behavior‑Driven Development (BDD)
 
+- **Tooling**: We chose `pytest‑bdd` so we could write Gherkin scenarios and step definitions in Python.
+- **Feature File**: `tests/feature/add_task.feature` describes 5 end‑to‑end behaviors:
+  1. Adding a task
+  2. Completing a task
+  3. Deleting a task
+  4. Filtering by category
+  5. Editing a task
+
+```
+Feature: Task management
+
+  Scenario: Adding a new task
+    Given I start with no tasks
+    When I add a task with title "Buy milk" and description "Get 2% milk" and priority "High" and category "Personal" and due date "2025-05-01"
+    Then the task list contains exactly 1 task
+    And the task titled "Buy milk" has description "Get 2% milk"
+    And the task titled "Buy milk" has priority "High"
+    And the task titled "Buy milk" has category "Personal"
+    And the task titled "Buy milk" has due date "2025-05-01"
+    And the task titled "Buy milk" is not completed
+
+  Scenario: Completing a task
+    Given a task titled "Write report" with description "Draft v1" and priority "Medium" and category "Work" and due date "2025-06-01" exists
+    When I mark the task "Write report" as complete
+    Then the task "Write report" is marked completed
+
+  Scenario: Deleting a task
+    Given tasks titled "Old task" and "Keep task" exist
+    When I delete the task "Old task"
+    Then the task list does not contain "Old task"
+    And the task list still contains "Keep task"
+
+  Scenario: Filtering tasks by category
+    Given tasks titled "A" (category "Work") and "B" (category "Personal") and "C" (category "Work") exist
+    When I filter tasks by category "Work"
+    Then only tasks titled "A" and "C" are visible
+
+  Scenario: Editing a task
+    Given I have an existing task titled "Draft" with description "Initial" and priority "Low" and category "School" and due date "2025-07-01" exists
+    When I edit the task "Draft" changing title to "Final" and description to "Revised" and priority to "High" and category to "Work" and due date to "2025-07-15"
+    Then the task list contains a task titled "Final"
+    And that task has description "Revised"
+    And that task has priority "High"
+    And that task has category "Work"
+    And that task has due date "2025-07-15"
+
+```
+
+- **Step Definitions**: Implemented in `tests/feature/steps/test_add_steps.py`. We use fixtures to set up `tmp_path` + `session_state`, then call our core functions (`handle_new_task`, `complete_task`, `delete_task`, etc.).
+- **Streamlit Integration**:  
+
+```
+  def show_bdd_button():
+      if st.button("Run BDD Tests", key="bdd"):
+          subprocess.run(["pytest","tests/feature","-q"])
+```
+### Test Output
+```
+============================================== tests coverage ===============================================
+_____________________________ coverage: platform darwin, python 3.13.1-final-0 ______________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          113     72    36%   25-32, 36-62, 89-91, 100, 103, 106-110, 138-165, 173-195, 203, 206-207, 210, 213, 216-217, 220, 349-350
+src/tasks.py         59     20    66%   23-31, 71, 97, 110-111, 128-129, 140-141, 151-152, 159, 177, 180
+-----------------------------------------------
+TOTAL               172     92    47%
+5 passed in 0.77s
+```
+
+
+# What I've Learned Throughout This Process
+
+Over the course of this assignment, I learned just how critical robust error handling and comprehensive test coverage are to software quality. Every bug— from the duplicate-ID issue to the double-click button glitch—taught me the importance of writing tests that not only confirm correct behavior but also anticipate edge cases. 
+
+Debugging felt like incredibly exhaustive detective work: each pytest failure message pointed me to a new hypothesis, and each fix inspired fresh tests to lock down the behavior. Setting up BDD scenarios with pytest‑bdd forced me to think in terms of user stories and workflows, not just individual functions, which was a powerful shift in perspective.
+
+Balancing Streamlit’s reactive UI with pure‑logic functions drove home the value of separation of concerns—extracting business logic into `src/tasks.py` made unit and property‑based tests far more straightforward. I also saw how TDD accelerates design: writing failing tests for a feature before implementing it kept the scope focused and minimized regression.
+
+Adding the “Run Selected Tests” and “Run BDD Tests” buttons in the app highlighted how developer ergonomics can be built into the product itself—empowering users (and myself) to validate the entire suite with a single click. Watching coverage climb from 25% to over 97% was immensely satisfying and underscored that true confidence in code comes from seeing it exercise every branch, every corner case.
+
+Overall, this process taught me patience (sometimes the simplest typo can block a hundred lines of code), persistence, and pride in delivering a to‑do app that’s not just functional, but battle‑tested end to end.
 

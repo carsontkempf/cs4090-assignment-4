@@ -171,6 +171,7 @@ def test_search_tasks_param(tasks_list, query, expected):
     ("Run Param Tests", ["pytest","tests/test_advanced.py","-q"], None),
     ("Run Mock Tests", ["pytest","tests/test_advanced.py","-q"], None),
     ("Run HTML Report", ["pytest","--html=report.html","--self-contained-html","-q"], "[View HTML Report](report.html)"),
+    ("Run BDD Tests", ["pytest","-q","tests/feature"], None),
 ])
 def test_run_button_commands(monkeypatch, label, args, link):
     calls = []
@@ -273,6 +274,8 @@ def test_run_helpers(monkeypatch):
     app_module.run_html_report()
     assert calls[-1] == ["pytest","--html=report.html","--self-contained-html","-q"]
     assert "[View HTML Report]" in md[-1]
+    app_module.run_bdd_tests()
+    assert calls[-1] == ["pytest", "-q", "tests/feature"]
 
 # --- show_filters coverage ---
 def test_show_filters(monkeypatch):
@@ -402,15 +405,17 @@ def test_main_run_selected(monkeypatch):
     monkeypatch.setattr(app_module.st, "markdown", lambda *a,**k: None)
     monkeypatch.setattr(app_module.st, "expander", lambda *a,**k: DummyCM())
     monkeypatch.setattr(app_module.st, "write", lambda *a,**k: None)
-    monkeypatch.setattr(app_module.st, "columns", lambda *a,**k: (DummyCM(),DummyCM(),DummyCM(),DummyCM(),DummyCM()))
+    monkeypatch.setattr(app_module.st, "columns", lambda *a,**k: (
+        DummyCM(), DummyCM(), DummyCM(), DummyCM(), DummyCM(), DummyCM()
+    ))    
     monkeypatch.setattr(app_module.st, "checkbox", lambda *a,**k: True)
     # Stub run functions
-    for fname in ["run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report"]:
+    for fname in ["run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report", "run_bdd_tests"]:
         monkeypatch.setattr(app_module, fname, lambda f=fname: calls.append(f))
     monkeypatch.setattr(app_module.st, "button", lambda lbl, **k: lbl=="Run Selected Tests")
     # Execute main
     app_module.main()
-    assert set(calls) == {"run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report"}
+    assert set(calls) == {"run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report", "run_bdd_tests"}
 
 def test_module_run_main(monkeypatch):
     import sys

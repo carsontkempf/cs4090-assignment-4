@@ -3,10 +3,10 @@
 ## Objective
 Develop a simple To-Do List application using Streamlit, enhanced with buttons that trigger various automated tests. The goal is to give students hands-on experience with:
 
-- [ ] Basic pytest
-- [ ] Pytest features (fixtures, parameterization)
-- [ ] Test-Driven Development (TDD)
-- [ ] Behavior-Driven Development (BDD)
+- [x] Basic pytest
+- [x] Pytest features (fixtures, parameterization)
+- [x] Test-Driven Development (TDD)
+- [x] Behavior-Driven Development (BDD)
 - [ ] Property-Based Testing (hypothesis)
 
 ## Assignment Details
@@ -15,10 +15,10 @@ Develop a simple To-Do List application using Streamlit, enhanced with buttons t
 
 ## The Application
 The application allows users to:
-- [ ] Create, edit, and delete tasks
-- [ ] Set priorities and due dates
-- [ ] Categorize and filter tasks
-- [ ] Mark tasks as complete
+- [x] Create, edit, and delete tasks
+- [x] Set priorities and due dates
+- [x] Categorize and filter tasks
+- [x] Mark tasks as complete
 
 ## Setup Instructions
 
@@ -61,18 +61,18 @@ You must implement and document the following types of tests:
 - [x] Have separate streamlit button for each functionalities. On button press it runs the specific test
 
 ### 4. Do Test-Driven Development (TDD)  (20 points)
-- [ ] Identify at least 3 new features to add to the application
-- [ ] Write tests for these features before implementing them
-- [ ] Document your TDD process, including:
-  - [ ] Initial test creation
-  - [ ] Test failure demonstration
-  - [ ] Feature implementation
-  - [ ] Test passing verification
-  - [ ] Any refactoring performed
+- [x] Identify at least 3 new features to add to the application
+- [x] Write tests for these features before implementing them
+- [x] Document your TDD process, including:
+  - [x] Initial test creation
+  - [x] Test failure demonstration
+  - [x] Feature implementation
+  - [x] Test passing verification
+  - [x] Any refactoring performed
 
 ### 5. Do Behavior-Driven Development (BDD)  (20 points)
-- [ ] Add at least 5 BDD tests
-- [ ] Have a streamlit button. On button press it runs the tests
+- [x] Add at least 5 BDD tests
+- [x] Have a streamlit button. On button press it runs the tests
 
 ### (Bonus) 6. Do Property-Based Testing   (20 points)
 - [ ] Add at least 5 hypothesis tests
@@ -81,18 +81,18 @@ You must implement and document the following types of tests:
 --- 
 
 ## Deliverables
-- [ ] GitHub Repository containing:
-  - [ ] All test code
-  - [ ] Test data
-  - [ ] Documentation
-  - [ ] Fixed application code
-- [ ] Written Report (4-5 pages) including:
-  - [ ] Test results and metrics
-  - [ ] Bug summary
-  - [ ] Reports of TDD, BDD, and Property-based testing
-  - [ ] Lessons learned
-- [ ] Streamlit App Link
-- [ ] Good luck and happy testing!
+- [x] GitHub Repository containing:
+  - [x] All test code
+  - [x] Test data
+  - [x] Documentation
+  - [x] Fixed application code
+- [x] Written Report (4-5 pages) including:
+  - [x] Test results and metrics
+  - [x] Bug summary
+  - [x] Reports of TDD, BDD, and Property-based testing
+  - [x] Lessons learned
+- [x] Streamlit App Link
+- [x] Good luck and happy testing!
 
 
 ---
