@@ -34,11 +34,89 @@ Achieved **100% overall** coverage across all test suites for both `src/app.py` 
    - Isolated UI-centric code in `src/app.py`, marking UI methods with `# pragma: no cover`.  
    - Centralized filtering, sorting, and action logic into helper functions to enable isolated unit testing.
 
-4. **100% Coverage Verification**  
-   - `src/app.py`: 51 statements, 0 missing.  
-   - `src/tasks.py`: 32 statements, 0 missing.
+![](images/2025-04-22-16-03-19.png)
 
-![](images/2025-04-22-10-12-13.png)
+```
+Tue, Apr 22 2025 - 04:14 PM      —      Rolla: ☀️   +71°F
+
+=============================================================
+
+(.venv) bash-3.2$ streamlit run src/app.py
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://10.106.50.237:8501
+
+  For better performance, install the Watchdog module:
+
+  $ xcode-select --install
+  $ pip install watchdog
+            
+.................................................................                                  [100%]
+============================================= tests coverage =============================================
+____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          111      1    99%   62
+src/tasks.py         55      1    98%   176
+-----------------------------------------------
+TOTAL               166      2    99%
+65 passed in 1.10s
+.................................................................                                  [100%]
+============================================= tests coverage =============================================
+____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          111      1    99%   62
+src/tasks.py         55      1    98%   176
+-----------------------------------------------
+TOTAL               166      2    99%
+Coverage HTML written to dir htmlcov
+65 passed in 1.19s
+......................................                                                             [100%]
+============================================= tests coverage =============================================
+____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          111      2    98%   39, 62
+src/tasks.py         55      1    98%   176
+-----------------------------------------------
+TOTAL               166      3    98%
+38 passed in 0.82s
+......................................                                                             [100%]
+============================================= tests coverage =============================================
+____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          111      2    98%   39, 62
+src/tasks.py         55      1    98%   176
+-----------------------------------------------
+TOTAL               166      3    98%
+38 passed in 0.89s
+.................................................................                                  [100%]
+============================================= tests coverage =============================================
+____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/__init__.py       0      0   100%
+src/app.py          111      1    99%   62
+src/tasks.py         55      1    98%   176
+-----------------------------------------------
+TOTAL               166      2    99%
+- Generated html report: file:///Users/ctk/Programming/VSCodeProjects/School/Software%20Engineering/cs4090-assignment-4/report.html -
+65 passed in 1.11s
+
+```
 
 
   ---
@@ -136,16 +214,24 @@ Removed redundant state reset in Streamlit after each action; replaced `return N
      - Run tests and verify overdue styling appears.
 ![](images/2025-04-22-12-34-48.png)
 
-1. **Feature: Task Sorting by Due Date**
+3. **Feature: Task Sorting by Due Date**
    - **TDD Tests:**  
      - Write failing tests for `sort_tasks_by_due_date(tasks, ascending=True)` ensuring correct order.  
      - Write UI tests for selecting sort order and rendering accordingly.  
+![](images/2025-04-22-13-52-08.png)
    - **Implementation Steps:**  
      1. Implement `sort_tasks_by_due_date` in `tasks.py`.  
      2. Add a sort option in `app.py` sidebar (`st.selectbox`) for “Sort by Due Date: Ascending/Descending”.  
      3. Apply sorting function before rendering tasks.  
+![](images/2025-04-22-13-54-57.png)
    - **Refactoring & Validation:**  
      - Centralize filter and sort logic in `compute_filters_and_sort` for testability.  
      - Confirm tests pass and UI sorting works as expected.
+![](images/2025-04-22-13-53-48.png)
+![](images/2025-04-22-13-54-04.png)
+
+### Features Working
+![](images/2025-04-22-16-19-20.png)
+
 
 

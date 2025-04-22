@@ -147,6 +147,7 @@ def is_task_overdue(task):
     today = datetime.now().strftime("%Y-%m-%d")
     return not task.get("completed", False) and task.get("due_date", "") < today
 
+
 def sort_tasks_by_due_date(tasks, ascending=True):
     """
     Sort tasks by their due_date string (YYYY-MM-DD).
@@ -157,12 +158,11 @@ def sort_tasks_by_due_date(tasks, ascending=True):
         reverse=not ascending
     )
 
-
 def edit_task(tasks, task_id, updates):
     """
     Remove the old task and insert a new one with updated fields,
     preserving any fields not explicitly updated.
-    """
+    """ 
     original = None
     # Find and remove the original task
     new_tasks = []

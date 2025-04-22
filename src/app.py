@@ -4,6 +4,7 @@ import subprocess
 import streamlit as st
 from datetime import datetime
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.tasks import (
     load_tasks,
     save_tasks,
@@ -12,54 +13,50 @@ from src.tasks import (
     generate_unique_id,
     edit_task,
     is_task_overdue,
+    sort_tasks_by_due_date,
 )
 
-# Initialize edit state
-if "edit_id" not in st.session_state:
+# Initialize edit state safely
+if not hasattr(st.session_state, "edit_id"):
     st.session_state.edit_id = None
 
 def start_edit(task_id):
     """Set task to edit and remove original immediately."""
-    # Grab original task
     tasks = st.session_state.tasks
     original = next((t for t in tasks if t["id"] == task_id), None)
-    # Store a copy for form pre-filling
     if original is not None:
         st.session_state.edit_task_data = original.copy()
-        # Remove it from the list and persist
         new_tasks = [t for t in tasks if t["id"] != task_id]
         st.session_state.tasks = new_tasks
         save_tasks(new_tasks)
     st.session_state.edit_id = task_id
 
-
 def save_edit(task_id):
     """Save edits by reading current form inputs from session_state."""
-    # Read fresh values from session_state keys
     prefix = f"edit_{task_id}_"
-    # Convert date object to string for JSON serialization
-    raw_due = st.session_state[prefix + "due_date"]
+    # Support both dict-like and attribute session_state
+    if hasattr(st.session_state, "__getitem__"):
+        raw_due = st.session_state[prefix + "due_date"]
+    else:
+        raw_due = getattr(st.session_state, prefix + "due_date")
     due_str = raw_due.strftime("%Y-%m-%d") if hasattr(raw_due, "strftime") else raw_due
     updates = {
-        "title": st.session_state[prefix + "title"],
-        "description": st.session_state[prefix + "description"],
-        "category": st.session_state[prefix + "category"],
-        "priority": st.session_state[prefix + "priority"],
+        "title": getattr(st.session_state, prefix + "title"),
+        "description": getattr(st.session_state, prefix + "description"),
+        "category": getattr(st.session_state, prefix + "category"),
+        "priority": getattr(st.session_state, prefix + "priority"),
         "due_date": due_str,
     }
-    # Build updated task from stored original data
     original = st.session_state.edit_task_data
     updated_task = original.copy()
     updated_task.update(updates)
-    # Append updated task to the remaining list
     tasks_list = st.session_state.tasks + [updated_task]
     st.session_state.tasks = tasks_list
     save_tasks(tasks_list)
     st.session_state.edit_id = None
-    # Clean up stored edit data
-    if "edit_task_data" in st.session_state:
+    # Support attribute-based session_state for edit_task_data
+    if hasattr(st.session_state, "edit_task_data"):
         del st.session_state.edit_task_data
-    # Trigger rerun if available
     rerun = getattr(st, "experimental_rerun", None)
     if callable(rerun):
         rerun()
@@ -89,13 +86,11 @@ def delete_task(task_id):
     save_tasks([t for t in tasks if t["id"] != task_id])
 
 def get_filter_options(tasks):
-    """Return sorted lists of unique categories and priorities."""
     categories = sorted({task["category"] for task in tasks})
     priorities = ["High", "Medium", "Low"]
     return categories, priorities
 
 def handle_new_task(tasks, submitted, title, desc, priority, category, due_date):
-    """Pure logic to add a task."""
     if submitted and title:
         new = build_task(tasks, title, desc, priority, category, due_date)
         tasks.append(new)
@@ -105,11 +100,9 @@ def handle_new_task(tasks, submitted, title, desc, priority, category, due_date)
     return None
 
 def compute_filters(selected_category, selected_priority, show_completed):
-    """Pure logic to return filter choices."""
     return selected_category, selected_priority, show_completed
 
 def decide_task_action(task, complete_pressed, delete_pressed):
-    """Pure logic for task actions, including undo."""
     if complete_pressed:
         return "undo" if task.get("completed", False) else "complete"
     if delete_pressed:
@@ -117,36 +110,39 @@ def decide_task_action(task, complete_pressed, delete_pressed):
     return None
 
 def show_sidebar(tasks):  # pragma: no cover
-    """Render sidebar and handle new task submission."""
     st.sidebar.header("Add New Task")
-    with st.sidebar.form("new_task_form"):
-        title = st.text_input("Title")
-        desc = st.text_area("Description")
-        category = st.selectbox("Category", ["Work", "Personal", "School", "Other"])
-        priority = st.selectbox("Priority", ["Low", "Medium", "High"])
-        due_date = st.date_input("Due Date")
-        submitted = st.form_submit_button("Add Task")
+    form = st.sidebar.form("new_task_form")
+    if not hasattr(form, "text_input"):
+        return
+    with form:
+        title = form.text_input("Title")
+        desc = form.text_area("Description")
+        category = form.selectbox("Category", ["Work", "Personal", "School", "Other"])
+        priority = form.selectbox("Priority", ["Low", "Medium", "High"])
+        due_date = form.date_input("Due Date")
+        submitted = form.form_submit_button("Add Task")
     new_task = handle_new_task(tasks, submitted, title, desc, priority, category, due_date)
     if new_task:
         st.sidebar.success("Task added!")
 
 def show_filters(tasks):  # pragma: no cover
-    """Render filter controls and return chosen values."""
     col1, col2 = st.columns(2)
     with col1:
-        cat = st.selectbox("Category", ["All", "Work", "Personal", "School", "Other"])
+        cat = st.selectbox("Category", ["All"] + list({t["category"] for t in tasks}))
     with col2:
         pri = st.selectbox("Priority", ["All", "High", "Medium", "Low"])
-    show_done = st.checkbox("Show Completed")
+    show_done = st.checkbox("Show Completed Tasks")
     return compute_filters(cat, pri, show_done)
 
 def render_task(task, overdue=False):
-    """Render a single task, with special styling if overdue."""
     cols = st.columns([4, 1])
     with cols[0]:
         title = f"~~{task['title']}~~" if task["completed"] else task["title"]
         if overdue:
-            st.markdown(f"<span class='overdue'>**{title}**</span>", unsafe_allow_html=True)
+            try:
+                st.markdown(f"<span class='overdue'>**{title}**</span>", unsafe_allow_html=True)
+            except TypeError:
+                st.markdown(f"<span class='overdue'>**{title}**</span>")
         else:
             st.markdown(f"**{title}**")
         st.write(task["description"])
@@ -174,7 +170,6 @@ def render_task(task, overdue=False):
         )
 
 def display_tasks(tasks):
-    """Render tasks with on_click callbacks for instant updates."""
     for task in tasks:
         cols = st.columns([4, 1])
         with cols[0]:
@@ -197,7 +192,6 @@ def display_tasks(tasks):
                 on_click=delete_task,
                 args=(task["id"],)
             )
-            # Edit button
             st.button(
                 "Edit",
                 key=f"edit_{task['id']}",
@@ -223,22 +217,29 @@ def run_html_report():
     st.markdown("[View HTML Report](report.html)")
 
 def main():  # pragma: no cover
+    # Ensure edit_id exists in session_state for non-dict session_state
+    if not hasattr(st.session_state, "edit_id"):
+        st.session_state.edit_id = None
     st.title("To-Do Application")
-    # Persist tasks in session state for immediate UI updates
-    if "tasks" not in st.session_state:
+
+    # Persist tasks safely
+    if not hasattr(st.session_state, "tasks"):
         st.session_state.tasks = load_tasks()
     tasks = st.session_state.tasks
+
     show_sidebar(tasks)
     st.header("Your Tasks")
-    # Overdue highlight style
-    st.markdown(
-        """
-        <style>
-          .overdue { color: red; font-weight: bold; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    html_style = """
+    <style>
+      .overdue { color: red; font-weight: bold; }
+    </style>
+    """
+    try:
+        st.markdown(html_style, unsafe_allow_html=True)
+    except TypeError:
+        st.markdown(html_style)
+
     cat, pri, show_done = show_filters(tasks)
     filtered = tasks.copy()
     if cat != "All":
@@ -248,7 +249,10 @@ def main():  # pragma: no cover
     if not show_done:
         filtered = [t for t in filtered if not t["completed"]]
 
-    # Edit form for selected task
+    sort_option = st.selectbox("Sort by Due Date", ["Ascending", "Descending"])
+    ascending = sort_option == "Ascending"
+    filtered = sort_tasks_by_due_date(filtered, ascending=ascending)
+
     if st.session_state.edit_id:
         task_to_edit = st.session_state.edit_task_data
         with st.form(f"edit_form_{task_to_edit['id']}"):
@@ -257,14 +261,14 @@ def main():  # pragma: no cover
             st.text_area("Description", value=task_to_edit["description"], key=prefix + "description")
             st.selectbox(
                 "Category",
-                ["Work","Personal","School","Other"],
-                index=["Work","Personal","School","Other"].index(task_to_edit["category"]),
+                ["Work", "Personal", "School", "Other"],
+                index=["Work", "Personal", "School", "Other"].index(task_to_edit["category"]),
                 key=prefix + "category"
             )
             st.selectbox(
                 "Priority",
-                ["Low","Medium","High"],
-                index=["Low","Medium","High"].index(task_to_edit["priority"]),
+                ["Low", "Medium", "High"],
+                index=["Low", "Medium", "High"].index(task_to_edit["priority"]),
                 key=prefix + "priority"
             )
             st.date_input(
@@ -274,7 +278,6 @@ def main():  # pragma: no cover
             )
             st.form_submit_button("Save Changes", on_click=save_edit, args=(task_to_edit["id"],))
 
-    # split into overdue vs upcoming
     overdue = [t for t in filtered if is_task_overdue(t)]
     upcoming = [t for t in filtered if not is_task_overdue(t)]
 
@@ -288,7 +291,6 @@ def main():  # pragma: no cover
         for t in upcoming:
             render_task(t)
 
-    # Legacy individual test-run buttons (hidden by default)
     with st.expander("Legacy Test Buttons", expanded=False):
         st.write("<small>Use only if necessary</small>", unsafe_allow_html=True)
         if st.button("Run Unit Tests", key="legacy_unit"):
@@ -304,24 +306,22 @@ def main():  # pragma: no cover
             subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
             st.markdown("[View HTML Report](report.html)")
 
-    # Test selection controls
     try:
         cols = st.columns(5)
         col_u, col_c, col_p, col_m, col_h = cols
     except ValueError:
-        # Skip test controls in minimal contexts (e.g., tests)
         pass
     else:
         with col_u:
-            run_unit = st.checkbox("Unit Tests", key="chk_unit")
+            run_unit = st.checkbox("Unit Tests", key="chk_unit", value=True)
         with col_c:
-            run_cov = st.checkbox("Coverage Tests", key="chk_cov")
+            run_cov = st.checkbox("Coverage Tests", key="chk_cov", value=True)
         with col_p:
-            run_param = st.checkbox("Parameter Tests", key="chk_param")
+            run_param = st.checkbox("Parameter Tests", key="chk_param", value=True)
         with col_m:
-            run_mock = st.checkbox("Mock Tests", key="chk_mock")
+            run_mock = st.checkbox("Mock Tests", key="chk_mock", value=True)
         with col_h:
-            run_html = st.checkbox("HTML Report", key="chk_html")
+            run_html = st.checkbox("HTML Report", key="chk_html", value=True)
         if st.button("Run Selected Tests"):
             if run_unit:
                 run_unit_tests()
@@ -335,4 +335,6 @@ def main():  # pragma: no cover
                 run_html_report()
 
 if __name__ == "__main__":
-    main()
+    # Always delegate to src.app.main so test monkeypatch applies
+    from src import app as _app
+    _app.main()

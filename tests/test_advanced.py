@@ -2,6 +2,8 @@ import sys, os, subprocess
 import pytest
 from pathlib import Path
 from datetime import datetime, date, timedelta
+from datetime import date
+import src.tasks as tasks_module
 
 # Ensure project root on path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -219,3 +221,203 @@ def test_get_overdue_and_upcoming(sample_tasks):
     upcoming = get_upcoming_tasks(sample_tasks.copy())
     assert {t["id"] for t in overdue} == {1}
     assert {t["id"] for t in upcoming} == {2,3}
+
+# --- Sidebar form integration test ---
+class FS:
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def text_input(self, *a, **k): return "T"
+    def text_area(self, *a, **k): return "D"
+    def selectbox(self, *a, **k): return "Low"
+    def date_input(self, *a, **k): return date.today()
+    def form_submit_button(self, *a, **k): return True
+
+def test_show_sidebar_integration(tmp_path, monkeypatch):
+    # Setup file and state
+    fp = tmp_path / "tasks.json"
+    monkeypatch.setenv("DEFAULT_TASKS_FILE", str(fp))
+    monkeypatch.setattr(tasks_module, "DEFAULT_TASKS_FILE", str(fp))
+    state = type("S", (), {})()
+    state.tasks = []
+    monkeypatch.setattr(app_module.st, "session_state", state)
+    monkeypatch.setattr(app_module.st, "sidebar", type("SB", (), {
+        "header": lambda *a,**k: None,
+        "form": lambda *a,**k: FS(),
+        "success": lambda msg: None
+    }))
+    monkeypatch.setattr(app_module, "save_tasks",
+        lambda tasks: tasks_module.save_tasks(tasks, file_path=str(fp)))
+    monkeypatch.setattr(app_module, "load_tasks",
+        lambda: tasks_module.load_tasks(file_path=str(fp)))
+
+    app_module.show_sidebar(state.tasks)
+    saved = tasks_module.load_tasks(file_path=str(fp))
+    assert len(saved) == 1
+    assert state.tasks and state.tasks[0]["title"] == "T"
+
+# --- Run test runner functions ---
+def test_run_helpers(monkeypatch):
+    calls = []
+    md = []
+    monkeypatch.setattr(app_module.subprocess, "run", lambda cmd, *a, **k: calls.append(cmd))
+    monkeypatch.setattr(app_module.st, "markdown", lambda txt: md.append(txt))
+    app_module.run_unit_tests()
+    assert calls[-1] == ["pytest","-q"]
+    app_module.run_cov_tests()
+    assert calls[-1] == ["pytest","--cov=src","--cov-report=html","-q"]
+    assert "[View Coverage Report]" in md[-1]
+    app_module.run_param_tests()
+    assert calls[-1] == ["pytest","tests/test_advanced.py","-q"]
+    app_module.run_mock_tests()
+    assert calls[-1] == ["pytest","tests/test_advanced.py","-q"]
+    app_module.run_html_report()
+    assert calls[-1] == ["pytest","--html=report.html","--self-contained-html","-q"]
+    assert "[View HTML Report]" in md[-1]
+
+# --- show_filters coverage ---
+def test_show_filters(monkeypatch):
+    # stub UI
+    monkeypatch.setattr(app_module.st, "columns", lambda *a,**k: (DummyCM(), DummyCM()))
+    seq = iter(["CatVal","PriVal"])
+    monkeypatch.setattr(app_module.st, "selectbox", lambda *a,**k: next(seq))
+    monkeypatch.setattr(app_module.st, "checkbox", lambda *a,**k: True)
+    result = app_module.show_filters([])
+    assert result == ("CatVal","PriVal",True)
+
+# --- render_task coverage ---
+def test_render_task(monkeypatch):
+    calls = []
+    monkeypatch.setattr(app_module.st, "markdown", lambda txt, **k: calls.append(("md", txt)))
+    monkeypatch.setattr(app_module.st, "write", lambda txt: calls.append(("wr", txt)))
+    monkeypatch.setattr(app_module.st, "caption", lambda txt: calls.append(("cap", txt)))
+    monkeypatch.setattr(app_module.st, "button", lambda *a, **k: None)
+    task = {"id":1,"title":"X","description":"Y","due_date":"D","priority":"P","category":"C","completed":False}
+    app_module.render_task(task, overdue=False)
+    assert any(c[0]=="md" and "**X**" in c[1] for c in calls)
+    calls.clear()
+    app_module.render_task(task, overdue=True)
+    assert any(c[0]=="md" and "overdue" in c[1] for c in calls)
+
+# --- display_tasks coverage ---
+def test_display_tasks(monkeypatch):
+    calls = []
+    monkeypatch.setattr(app_module.st, "markdown", lambda txt: calls.append(txt))
+    monkeypatch.setattr(app_module.st, "write", lambda txt: calls.append(txt))
+    monkeypatch.setattr(app_module.st, "caption", lambda txt: calls.append(txt))
+    monkeypatch.setattr(app_module.st, "button", lambda lbl, **k: calls.append(lbl))
+    tasks = [{"id":2,"title":"Z","description":"D","due_date":"D","priority":"P","category":"C","completed":True}]
+    app_module.display_tasks(tasks)
+    assert any("Z" in c for c in calls)
+
+# --- complete_task and delete_task coverage ---
+def test_complete_and_delete(tmp_path, monkeypatch):
+    fp = tmp_path / "tasks.json"
+    tasks_module.save_tasks([{"id":5,"completed":False}], file_path=str(fp))
+    # Stub app_module load/save to use our tmp file
+    monkeypatch.setattr(app_module, "load_tasks", lambda: tasks_module.load_tasks(file_path=str(fp)))
+    monkeypatch.setattr(app_module, "save_tasks", lambda tasks_list: tasks_module.save_tasks(tasks_list, file_path=str(fp)))
+    app_module.complete_task(5)
+    loaded = tasks_module.load_tasks(file_path=str(fp))
+    assert loaded[0]["completed"] is True
+    app_module.delete_task(5)
+    loaded2 = tasks_module.load_tasks(file_path=str(fp))
+    assert loaded2 == []
+
+# --- Additional tests for src/app.py coverage ---
+import sys, runpy
+import streamlit as st
+
+def test_session_state_initialization(monkeypatch):
+    # Simulate fresh import; session_state should get edit_id=None
+    class SS: pass
+    new_state = SS()
+    monkeypatch.setattr(st, "session_state", new_state)
+    if "src.app" in sys.modules:
+        del sys.modules["src.app"]
+    new_app = __import__("src.app", fromlist=[""])
+    assert hasattr(new_state, "edit_id") and new_state.edit_id is None
+
+def test_start_and_save_edit(tmp_path, monkeypatch):
+    from datetime import datetime
+    # Prepare temp tasks file
+    fp = tmp_path / "tasks.json"
+    # Stub app_module load/save to use our temp file
+    monkeypatch.setattr(app_module, "load_tasks", lambda: tasks_module.load_tasks(file_path=str(fp)))
+    monkeypatch.setattr(app_module, "save_tasks", lambda lst: tasks_module.save_tasks(lst, file_path=str(fp)))
+    # Write initial task
+    tasks_module.save_tasks([{
+        "id": 10,
+        "title": "Orig",
+        "description": "Desc",
+        "priority": "Low",
+        "category": "Cat",
+        "due_date": "2025-01-01",
+        "completed": False,
+        "created_at": "2025-01-01 00:00:00"
+    }], file_path=str(fp))
+    # Inject session_state
+    class SS2: pass
+    state = SS2()
+    state.tasks = tasks_module.load_tasks(file_path=str(fp))
+    monkeypatch.setattr(app_module.st, "session_state", state)
+    # Call start_edit
+    app_module.start_edit(10)
+    assert state.tasks == []
+    assert state.edit_id == 10
+    assert state.edit_task_data["id"] == 10
+    # Fill edited values
+    prefix = f"edit_10_"
+    setattr(state, prefix + "title", "NewTitle")
+    setattr(state, prefix + "description", "NewDesc")
+    setattr(state, prefix + "priority", "High")
+    setattr(state, prefix + "category", "NewCat")
+    setattr(state, prefix + "due_date", datetime.strptime("2025-02-02", "%Y-%m-%d").date())
+    # Call save_edit
+    app_module.save_edit(10)
+    assert state.edit_id is None
+    updated = state.tasks[0]
+    assert updated["title"] == "NewTitle"
+    assert updated["description"] == "NewDesc"
+    assert updated["priority"] == "High"
+    assert updated["category"] == "NewCat"
+    assert updated["due_date"] == "2025-02-02"
+    assert not hasattr(state, "edit_task_data")
+
+def test_main_run_selected(monkeypatch):
+    calls = []
+    # Stub UI and logic components
+    monkeypatch.setattr(app_module, "show_sidebar", lambda tasks: None)
+    monkeypatch.setattr(app_module, "show_filters", lambda tasks: ("All","All",True))
+    monkeypatch.setattr(app_module, "filter_tasks_by_category", lambda tasks,cat: tasks)
+    monkeypatch.setattr(app_module, "filter_tasks_by_priority", lambda tasks,pri: tasks)
+    monkeypatch.setattr(app_module, "sort_tasks_by_due_date", lambda tasks,ascending: tasks)
+    monkeypatch.setattr(app_module, "display_tasks", lambda tasks: None)
+    # Prepare session_state
+    class SS3: pass
+    ss = SS3(); ss.tasks = []
+    monkeypatch.setattr(app_module.st, "session_state", ss)
+    # Stub Streamlit UI calls
+    monkeypatch.setattr(app_module.st, "title", lambda *a,**k: None)
+    monkeypatch.setattr(app_module.st, "header", lambda *a,**k: None)
+    monkeypatch.setattr(app_module.st, "markdown", lambda *a,**k: None)
+    monkeypatch.setattr(app_module.st, "expander", lambda *a,**k: DummyCM())
+    monkeypatch.setattr(app_module.st, "write", lambda *a,**k: None)
+    monkeypatch.setattr(app_module.st, "columns", lambda *a,**k: (DummyCM(),DummyCM(),DummyCM(),DummyCM(),DummyCM()))
+    monkeypatch.setattr(app_module.st, "checkbox", lambda *a,**k: True)
+    # Stub run functions
+    for fname in ["run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report"]:
+        monkeypatch.setattr(app_module, fname, lambda f=fname: calls.append(f))
+    monkeypatch.setattr(app_module.st, "button", lambda lbl, **k: lbl=="Run Selected Tests")
+    # Execute main
+    app_module.main()
+    assert set(calls) == {"run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report"}
+
+def test_module_run_main(monkeypatch):
+    import sys
+    # Ensure no prior src.app module to prevent RuntimeWarning
+    sys.modules.pop("src.app", None)
+    # Cover the __main__ block
+    called = []
+    monkeypatch.setattr("src.app.main", lambda: called.append(True))
+    runpy.run_module("src.app", run_name="__main__")
+    assert called

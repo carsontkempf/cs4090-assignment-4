@@ -1,12 +1,7 @@
-# tests/test_basic.py
-
 import sys, os
 import pytest
 from datetime import datetime, date
-
-# Ensure src is importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import src.app as app_module
 import streamlit as st
 from src.tasks import (
@@ -20,6 +15,7 @@ from src.app import (
     show_filters, show_sidebar,
     complete_task, delete_task, display_tasks, main
 )
+import subprocess
 
 # Minimal context‑manager stub for any 'with' blocks
 class DummyCM:
@@ -220,3 +216,85 @@ def test_main_runs_without_error(monkeypatch):
     monkeypatch.setattr(st, "selectbox", lambda *a,**k: "All")
     monkeypatch.setattr(st, "checkbox", lambda *a,**k: False)
     assert main() is None
+
+def test_start_and_save_edit(monkeypatch):
+    # prepare session state
+    st.session_state.clear()
+    st.session_state.tasks = [{
+        "id": 1,
+        "title": "A",
+        "description": "D",
+        "priority": "Low",
+        "category": "C",
+        "due_date": "2025-01-01",
+        "completed": False,
+        "created_at": "t"
+    }]
+    monkeypatch.setattr(app_module, "save_tasks", lambda tasks: None)
+    # start edit
+    app_module.start_edit(1)
+    assert st.session_state.edit_id == 1
+    assert st.session_state.tasks == []
+    # set edited fields
+    prefix = "edit_1_"
+    st.session_state[prefix + "title"] = "X"
+    st.session_state[prefix + "description"] = "Y"
+    st.session_state[prefix + "category"] = "C2"
+    st.session_state[prefix + "priority"] = "High"
+    st.session_state[prefix + "due_date"] = "2025-02-02"
+    # save edit
+    app_module.save_edit(1)
+    assert st.session_state.edit_id is None
+    assert all(t["title"] == "X" for t in st.session_state.tasks)
+
+def test_render_task_branches(monkeypatch):
+    calls = []
+    monkeypatch.setattr(st, "columns", lambda *a, **k: (DummyCM(), DummyCM()))
+    monkeypatch.setattr(st, "markdown", lambda txt, **kw: calls.append(txt))
+    monkeypatch.setattr(st, "write", lambda *a, **k: calls.append("write"))
+    monkeypatch.setattr(st, "caption", lambda txt: calls.append(txt))
+    # overdue True
+    app_module.render_task({
+        "id": 1, "title": "T", "description": "D",
+        "priority": "P", "category": "C", "due_date": "d", "completed": False
+    }, overdue=True)
+    # overdue False (completed)
+    app_module.render_task({
+        "id": 2, "title": "U", "description": "E",
+        "priority": "P", "category": "C", "due_date": "d", "completed": True
+    }, overdue=False)
+    assert any("<span" in c for c in calls)
+    assert any("~~U~~" in c for c in calls)
+
+def test_run_helpers(monkeypatch):
+    ran, md = [], []
+    monkeypatch.setattr(subprocess, "run", lambda cmd: ran.append(cmd))
+    monkeypatch.setattr(st, "markdown", lambda txt, **k: md.append(txt))
+    app_module.run_unit_tests()
+    app_module.run_param_tests()
+    app_module.run_mock_tests()
+    app_module.run_cov_tests()
+    app_module.run_html_report()
+    assert ["pytest", "-q"] in ran
+    assert ["pytest", "tests/test_advanced.py", "-q"] in ran
+    assert ["pytest", "--cov=src", "--cov-report=html", "-q"] in ran
+    assert ["pytest", "--html=report.html", "--self-contained-html", "-q"] in ran
+    assert any("View Coverage Report" in m for m in md)
+    assert any("View HTML Report" in m for m in md)
+
+def test_show_sidebar_adds_task(monkeypatch):
+    class FS:
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def text_input(self, *a, **k): return "Z"
+        def text_area(self, *a, **k): return "D"
+        def selectbox(self, *a, **k): return "Low"
+        def date_input(self, *a, **k): return __import__("datetime").date.today()
+        def form_submit_button(self, *a, **k): return True
+    monkeypatch.setattr(st.sidebar, "form", lambda *a, **k: FS())
+    got = []
+    monkeypatch.setattr(st.sidebar, "success", lambda msg: got.append(msg))
+    st.session_state.clear()
+    st.session_state.tasks = []
+    app_module.show_sidebar(st.session_state.tasks)
+    assert got and "added" in got[0]
