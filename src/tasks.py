@@ -23,6 +23,9 @@ def load_tasks(file_path=DEFAULT_TASKS_FILE):
     except json.JSONDecodeError:
         # Handle corrupted JSON file
         print(f"Warning: {file_path} contains invalid JSON. Creating new tasks list.")
+        # Reset corrupted file to empty list
+        with open(file_path, "w") as fw:
+            json.dump([], fw, indent=2)
         return []
 
 def save_tasks(tasks, file_path=DEFAULT_TASKS_FILE):
@@ -123,3 +126,47 @@ def get_overdue_tasks(tasks):
         if not task.get("completed", False) and 
            task.get("due_date", "") < today
     ]
+
+
+def get_upcoming_tasks(tasks):
+    """
+    Return tasks with due_date >= today (YYYY-MM-DD) and not completed.
+    """
+    today = datetime.now().strftime("%Y-%m-%d")
+    return [
+        task for task in tasks
+        if not task.get("completed", False) and task.get("due_date", "") >= today
+    ]
+
+def sort_tasks_by_due_date(tasks, ascending=True):
+    """
+    Sort tasks by their due_date string (YYYY-MM-DD).
+    """
+    return sorted(
+        tasks,
+        key=lambda t: t.get("due_date", ""),
+        reverse=not ascending
+    )
+
+def edit_task(tasks, task_id, updates):
+    """
+    Remove the old task and insert a new one with updated fields,
+    preserving any fields not explicitly updated.
+    """
+    original = None
+    # Find and remove the original task
+    new_tasks = []
+    for t in tasks:
+        if t.get("id") == task_id:
+            original = t
+        else:
+            new_tasks.append(t)
+    # If not found, return the list unchanged
+    if original is None:
+        return tasks
+    # Create updated task by merging original and updates
+    updated_task = original.copy()
+    updated_task.update(updates)
+    # Append the updated task
+    new_tasks.append(updated_task)
+    return new_tasks

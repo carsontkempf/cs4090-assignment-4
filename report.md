@@ -9,38 +9,36 @@
 
 ---
 
-# Unit Testing Coverage and Refactoring Summary
+## Unit Testing Coverage and Refactoring Summary
 
-Achieved **98% overall** coverage (100% on `tasks.py`, 96% on `app.py`) by:
+Achieved **100% overall** coverage across all test suites for both `src/app.py` and `src/tasks.py` by:
 
-1. **Extracting Pure Logic**  
-   Pulled all business logic out of UI into functions:
-   - `handle_new_task(tasks, submitted, title, desc, priority, category, due_date)`
-   - `compute_filters(selected_category, selected_priority, show_completed)`
-   - `decide_task_action(task, complete_pressed, delete_pressed)`
+1. **Streamlit Test Buttons in `app.py`**  
+   - "Run Unit Tests" triggers `pytest -q`.  
+   - "Run Coverage" triggers `pytest --cov=src --cov-report=html`.  
+   - "Run Param Tests" triggers `pytest tests/test_param.py`.  
+   - "Run Mock Tests" triggers `pytest tests/test_mock.py`.  
+   - "Run HTML Report" triggers `pytest --html=report.html --self-contained-html`.
 
-2. **Marking UI Routines as No Cover**  
-   Applied `# pragma: no cover` to UI-centric functions (`show_sidebar`, `show_filters`, `display_tasks`, `main`) so tests focus on core logic.
+2. **Comprehensive Test Suites**  
+   Consolidated and expanded test coverage with:  
+   - `tests/test_basic.py` (basic unit tests)  
+   - `tests/test_advanced.py` (fixtures & parameterization)  
+   - `tests/test_tdd.py` (TDD-driven examples)  
+   - `tests/test_property.py` (hypothesis property-based tests)  
+   - `tests/test_param.py` (parameterized tests)  
+   - `tests/test_mock.py` (mocking tests)
 
-3. **Refactoring Save & Rerun Logic**  
-   - Replaced `save_tasks(all_tasks)` with `save_tasks(tasks)` to remove undefined variables.  
-   - Replaced `st.experimental_rerun()` with `return` statements to prevent infinite loops during tests.
+3. **Refactoring for Testability**  
+   - Extracted pure logic into functions in `src/tasks.py` (`load_tasks`, `save_tasks`, `generate_unique_id`, `filter_tasks_by_*`, and new features like `edit_task`, `sort_tasks_by_due_date`).  
+   - Isolated UI-centric code in `src/app.py`, marking UI methods with `# pragma: no cover`.  
+   - Centralized filtering, sorting, and action logic into helper functions to enable isolated unit testing.
 
-4. **Introducing Helper Functions**  
-   - `get_filter_options(tasks)` returns sorted categories for predictable filtering.  
-   - `build_task(...)` encapsulates ID generation and timestamp formatting.
+4. **100% Coverage Verification**  
+   - `src/app.py`: 51 statements, 0 missing.  
+   - `src/tasks.py`: 32 statements, 0 missing.
 
-5. **Adding “Run Tests” Button**  
-   Integrated a `subprocess.run(["pytest", "-q"])` call behind a Streamlit **Run Tests** button, demonstrating in-app test execution.
-
-6. **Expanding Pytest Suite**  
-   Covered all logic branches with tests for:
-   - Task creation and save logic (`handle_new_task`)  
-   - Filter computation (`compute_filters`)  
-   - Task action decisions (`decide_task_action`)  
-   - All core functions in `tasks.py`  
-
-This systematic refactor and focused testing allowed us to surpass the 90% coverage requirement.
+![](images/2025-04-22-10-12-13.png)
 
 
   ---
@@ -103,6 +101,45 @@ Updated `decide_task_action` to handle “undo” state and modified `display_ta
 
 ### Fix for Bug 3: Button actions require double click  
 Removed redundant state reset in Streamlit after each action; replaced `return None` inside `display_tasks` with `st.experimental_rerun()` calls to immediately reflect state changes and ensure button press cycles reset correctly.
+
 ![](images/2025-04-21-16-51-38.png)
+
+---
+## New Feature Implementation Plan
+
+1. **Feature: Edit Task**
+   - **TDD Tests:**  
+     - Write initial failing tests in `test_tdd.py` for editing a task’s `title`, `description`, `priority`, `category`, and `due_date`.  
+   - **Implementation Steps:**  
+     1. Add `edit_task(tasks, task_id, updates)` in `tasks.py` to apply changes.  
+     2. Update `app.py` to include an “Edit” button per task that opens a form pre-filled with current values.  
+     3. On form submit, call `edit_task`, save tasks, and rerun UI.  
+   - **Refactoring & Validation:**  
+     - Refactor UI logic into `handle_edit_task` for testability.  
+     - Confirm tests pass and UI reflects edited values.
+
+2. **Feature: Overdue Task Highlighting**
+   - **TDD Tests:**  
+     - Write failing tests to verify `get_overdue_tasks` returns only tasks with `due_date` < today and `completed=False`.  
+     - Write a UI test to confirm overdue tasks are rendered with a specific CSS class or markdown style.  
+   - **Implementation Steps:**  
+     1. Use existing `get_overdue_tasks` or extend if needed.  
+     2. In `app.py` rendering loop, check overdue status and wrap task title with `st.markdown(f"<span class='overdue'>...</span>", unsafe_allow_html=True)`.  
+     3. Add CSS for `.overdue { color: red; font-weight: bold; }` via `st.markdown` with `<style>`.  
+   - **Refactoring & Validation:**  
+     - Extract overdue-check logic into `is_task_overdue` for test coverage.  
+     - Run tests and verify overdue styling appears.
+
+3. **Feature: Task Sorting by Due Date**
+   - **TDD Tests:**  
+     - Write failing tests for `sort_tasks_by_due_date(tasks, ascending=True)` ensuring correct order.  
+     - Write UI tests for selecting sort order and rendering accordingly.  
+   - **Implementation Steps:**  
+     1. Implement `sort_tasks_by_due_date` in `tasks.py`.  
+     2. Add a sort option in `app.py` sidebar (`st.selectbox`) for “Sort by Due Date: Ascending/Descending”.  
+     3. Apply sorting function before rendering tasks.  
+   - **Refactoring & Validation:**  
+     - Centralize filter and sort logic in `compute_filters_and_sort` for testability.  
+     - Confirm tests pass and UI sorting works as expected.
 
 

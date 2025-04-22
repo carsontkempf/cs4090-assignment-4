@@ -10,8 +10,41 @@ from src.tasks import (
     filter_tasks_by_priority,
     filter_tasks_by_category,
     generate_unique_id,
+    edit_task,
 )
-from tests import *
+
+# Initialize edit state
+if "edit_id" not in st.session_state:
+    st.session_state.edit_id = None
+
+def start_edit(task_id):
+    """Set task to edit."""
+    st.session_state.edit_id = task_id
+
+
+def save_edit(task_id):
+    """Save edits by reading current form inputs from session_state."""
+    # Read fresh values from session_state keys
+    prefix = f"edit_{task_id}_"
+    # Convert date object to string for JSON serialization
+    raw_due = st.session_state[prefix + "due_date"]
+    due_str = raw_due.strftime("%Y-%m-%d") if hasattr(raw_due, "strftime") else raw_due
+    updates = {
+        "title": st.session_state[prefix + "title"],
+        "description": st.session_state[prefix + "description"],
+        "category": st.session_state[prefix + "category"],
+        "priority": st.session_state[prefix + "priority"],
+        "due_date": due_str,
+    }
+    # Use edit_task to merge and replace
+    tasks_list = edit_task(st.session_state.tasks, task_id, updates)
+    st.session_state.tasks = tasks_list
+    save_tasks(tasks_list)
+    st.session_state.edit_id = None
+    # Trigger rerun if available
+    rerun = getattr(st, "experimental_rerun", None)
+    if callable(rerun):
+        rerun()
 
 def build_task(tasks, title, description, priority, category, due_date):
     """Construct a task dict with a unique ID and timestamp."""
@@ -49,6 +82,7 @@ def handle_new_task(tasks, submitted, title, desc, priority, category, due_date)
         new = build_task(tasks, title, desc, priority, category, due_date)
         tasks.append(new)
         save_tasks(tasks)
+        st.session_state.tasks = tasks
         return new
     return None
 
@@ -112,10 +146,37 @@ def display_tasks(tasks):
                 on_click=delete_task,
                 args=(task["id"],)
             )
+            # Edit button
+            st.button(
+                "Edit",
+                key=f"edit_{task['id']}",
+                on_click=start_edit,
+                args=(task["id"],)
+            )
+
+def run_unit_tests():
+    subprocess.run(["pytest", "-q"])
+
+def run_cov_tests():
+    subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
+    st.markdown("[View Coverage Report](htmlcov/index.html)")
+
+def run_param_tests():
+    subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+
+def run_mock_tests():
+    subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+
+def run_html_report():
+    subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
+    st.markdown("[View HTML Report](report.html)")
 
 def main():  # pragma: no cover
     st.title("To-Do Application")
-    tasks = load_tasks()
+    # Persist tasks in session state for immediate UI updates
+    if "tasks" not in st.session_state:
+        st.session_state.tasks = load_tasks()
+    tasks = st.session_state.tasks
     show_sidebar(tasks)
     st.header("Your Tasks")
     cat, pri, show_done = show_filters(tasks)
@@ -127,20 +188,79 @@ def main():  # pragma: no cover
     if not show_done:
         filtered = [t for t in filtered if not t["completed"]]
 
+    # Edit form for selected task
+    if st.session_state.edit_id:
+        task_to_edit = next(t for t in tasks if t["id"] == st.session_state.edit_id)
+        with st.form(f"edit_form_{task_to_edit['id']}"):
+            prefix = f"edit_{task_to_edit['id']}_"
+            st.text_input("Title", value=task_to_edit["title"], key=prefix + "title")
+            st.text_area("Description", value=task_to_edit["description"], key=prefix + "description")
+            st.selectbox(
+                "Category",
+                ["Work","Personal","School","Other"],
+                index=["Work","Personal","School","Other"].index(task_to_edit["category"]),
+                key=prefix + "category"
+            )
+            st.selectbox(
+                "Priority",
+                ["Low","Medium","High"],
+                index=["Low","Medium","High"].index(task_to_edit["priority"]),
+                key=prefix + "priority"
+            )
+            st.date_input(
+                "Due Date",
+                value=datetime.strptime(task_to_edit["due_date"], "%Y-%m-%d").date(),
+                key=prefix + "due_date"
+            )
+            st.form_submit_button("Save Changes", on_click=save_edit, args=(task_to_edit["id"],))
+
     display_tasks(filtered)
 
-    if st.button("Run Unit Tests"):
-        subprocess.run(["pytest", "-q"])
-    if st.button("Run Coverage"):
-        subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
-        st.markdown("[View Coverage Report](htmlcov/index.html)")
-    if st.button("Run Param Tests"):
-        subprocess.run(["pytest", "tests/test_param.py", "-q"])
-    if st.button("Run Mock Tests"):
-        subprocess.run(["pytest", "tests/test_mock.py", "-q"])
-    if st.button("Run HTML Report"):
-        subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
-        st.markdown("[View HTML Report](report.html)")
+    # Legacy individual test-run buttons (hidden by default)
+    with st.expander("Legacy Test Buttons", expanded=False):
+        st.write("<small>Use only if necessary</small>", unsafe_allow_html=True)
+        if st.button("Run Unit Tests", key="legacy_unit"):
+            subprocess.run(["pytest", "-q"])
+        if st.button("Run Coverage", key="legacy_cov"):
+            subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
+            st.markdown("[View Coverage Report](htmlcov/index.html)")
+        if st.button("Run Param Tests", key="legacy_param"):
+            subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+        if st.button("Run Mock Tests", key="legacy_mock"):
+            subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+        if st.button("Run HTML Report", key="legacy_html"):
+            subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
+            st.markdown("[View HTML Report](report.html)")
+
+    # Test selection controls
+    try:
+        cols = st.columns(5)
+        col_u, col_c, col_p, col_m, col_h = cols
+    except ValueError:
+        # Skip test controls in minimal contexts (e.g., tests)
+        pass
+    else:
+        with col_u:
+            run_unit = st.checkbox("Unit Tests", key="chk_unit")
+        with col_c:
+            run_cov = st.checkbox("Coverage Tests", key="chk_cov")
+        with col_p:
+            run_param = st.checkbox("Parameter Tests", key="chk_param")
+        with col_m:
+            run_mock = st.checkbox("Mock Tests", key="chk_mock")
+        with col_h:
+            run_html = st.checkbox("HTML Report", key="chk_html")
+        if st.button("Run Selected Tests"):
+            if run_unit:
+                run_unit_tests()
+            if run_cov:
+                run_cov_tests()
+            if run_param:
+                run_param_tests()
+            if run_mock:
+                run_mock_tests()
+            if run_html:
+                run_html_report()
 
 if __name__ == "__main__":
     main()
