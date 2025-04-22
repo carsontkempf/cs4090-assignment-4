@@ -11,6 +11,7 @@ from src.tasks import (
     filter_tasks_by_category,
     generate_unique_id,
     edit_task,
+    is_task_overdue,
 )
 
 # Initialize edit state
@@ -18,7 +19,17 @@ if "edit_id" not in st.session_state:
     st.session_state.edit_id = None
 
 def start_edit(task_id):
-    """Set task to edit."""
+    """Set task to edit and remove original immediately."""
+    # Grab original task
+    tasks = st.session_state.tasks
+    original = next((t for t in tasks if t["id"] == task_id), None)
+    # Store a copy for form pre-filling
+    if original is not None:
+        st.session_state.edit_task_data = original.copy()
+        # Remove it from the list and persist
+        new_tasks = [t for t in tasks if t["id"] != task_id]
+        st.session_state.tasks = new_tasks
+        save_tasks(new_tasks)
     st.session_state.edit_id = task_id
 
 
@@ -36,11 +47,18 @@ def save_edit(task_id):
         "priority": st.session_state[prefix + "priority"],
         "due_date": due_str,
     }
-    # Use edit_task to merge and replace
-    tasks_list = edit_task(st.session_state.tasks, task_id, updates)
+    # Build updated task from stored original data
+    original = st.session_state.edit_task_data
+    updated_task = original.copy()
+    updated_task.update(updates)
+    # Append updated task to the remaining list
+    tasks_list = st.session_state.tasks + [updated_task]
     st.session_state.tasks = tasks_list
     save_tasks(tasks_list)
     st.session_state.edit_id = None
+    # Clean up stored edit data
+    if "edit_task_data" in st.session_state:
+        del st.session_state.edit_task_data
     # Trigger rerun if available
     rerun = getattr(st, "experimental_rerun", None)
     if callable(rerun):
@@ -122,6 +140,39 @@ def show_filters(tasks):  # pragma: no cover
     show_done = st.checkbox("Show Completed")
     return compute_filters(cat, pri, show_done)
 
+def render_task(task, overdue=False):
+    """Render a single task, with special styling if overdue."""
+    cols = st.columns([4, 1])
+    with cols[0]:
+        title = f"~~{task['title']}~~" if task["completed"] else task["title"]
+        if overdue:
+            st.markdown(f"<span class='overdue'>**{title}**</span>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"**{title}**")
+        st.write(task["description"])
+        st.caption(
+            f"Due: {task['due_date']} | Priority: {task['priority']} | Category: {task['category']}"
+        )
+    with cols[1]:
+        st.button(
+            "Undo" if task["completed"] else "Complete",
+            key=f"complete_{task['id']}",
+            on_click=complete_task,
+            args=(task["id"],)
+        )
+        st.button(
+            "Delete",
+            key=f"delete_{task['id']}",
+            on_click=delete_task,
+            args=(task["id"],)
+        )
+        st.button(
+            "Edit",
+            key=f"edit_{task['id']}",
+            on_click=start_edit,
+            args=(task["id"],)
+        )
+
 def display_tasks(tasks):
     """Render tasks with on_click callbacks for instant updates."""
     for task in tasks:
@@ -179,6 +230,15 @@ def main():  # pragma: no cover
     tasks = st.session_state.tasks
     show_sidebar(tasks)
     st.header("Your Tasks")
+    # Overdue highlight style
+    st.markdown(
+        """
+        <style>
+          .overdue { color: red; font-weight: bold; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     cat, pri, show_done = show_filters(tasks)
     filtered = tasks.copy()
     if cat != "All":
@@ -190,7 +250,7 @@ def main():  # pragma: no cover
 
     # Edit form for selected task
     if st.session_state.edit_id:
-        task_to_edit = next(t for t in tasks if t["id"] == st.session_state.edit_id)
+        task_to_edit = st.session_state.edit_task_data
         with st.form(f"edit_form_{task_to_edit['id']}"):
             prefix = f"edit_{task_to_edit['id']}_"
             st.text_input("Title", value=task_to_edit["title"], key=prefix + "title")
@@ -214,7 +274,19 @@ def main():  # pragma: no cover
             )
             st.form_submit_button("Save Changes", on_click=save_edit, args=(task_to_edit["id"],))
 
-    display_tasks(filtered)
+    # split into overdue vs upcoming
+    overdue = [t for t in filtered if is_task_overdue(t)]
+    upcoming = [t for t in filtered if not is_task_overdue(t)]
+
+    if overdue:
+        st.subheader("Overdue Tasks")
+        for t in overdue:
+            render_task(t, overdue=True)
+
+    if upcoming:
+        st.subheader("Upcoming Tasks")
+        for t in upcoming:
+            render_task(t)
 
     # Legacy individual test-run buttons (hidden by default)
     with st.expander("Legacy Test Buttons", expanded=False):

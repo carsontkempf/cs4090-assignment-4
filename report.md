@@ -110,27 +110,33 @@ Removed redundant state reset in Streamlit after each action; replaced `return N
 1. **Feature: Edit Task**
    - **TDD Tests:**  
      - Write initial failing tests in `test_tdd.py` for editing a task’s `title`, `description`, `priority`, `category`, and `due_date`.  
+![](images/2025-04-22-12-18-55.png)
    - **Implementation Steps:**  
      1. Add `edit_task(tasks, task_id, updates)` in `tasks.py` to apply changes.  
      2. Update `app.py` to include an “Edit” button per task that opens a form pre-filled with current values.  
      3. On form submit, call `edit_task`, save tasks, and rerun UI.  
+![](images/2025-04-22-12-19-58.png)
    - **Refactoring & Validation:**  
      - Refactor UI logic into `handle_edit_task` for testability.  
      - Confirm tests pass and UI reflects edited values.
+![](images/2025-04-22-12-21-09.png)
 
 2. **Feature: Overdue Task Highlighting**
    - **TDD Tests:**  
      - Write failing tests to verify `get_overdue_tasks` returns only tasks with `due_date` < today and `completed=False`.  
      - Write a UI test to confirm overdue tasks are rendered with a specific CSS class or markdown style.  
+![](images/2025-04-22-12-31-45.png)
    - **Implementation Steps:**  
      1. Use existing `get_overdue_tasks` or extend if needed.  
      2. In `app.py` rendering loop, check overdue status and wrap task title with `st.markdown(f"<span class='overdue'>...</span>", unsafe_allow_html=True)`.  
-     3. Add CSS for `.overdue { color: red; font-weight: bold; }` via `st.markdown` with `<style>`.  
+     3. Add CSS for `.overdue { color: red; font-weight: bold; }` via `st.markdown` with `<style>`. 
+![](images/2025-04-22-12-33-31.png) 
    - **Refactoring & Validation:**  
      - Extract overdue-check logic into `is_task_overdue` for test coverage.  
      - Run tests and verify overdue styling appears.
+![](images/2025-04-22-12-34-48.png)
 
-3. **Feature: Task Sorting by Due Date**
+1. **Feature: Task Sorting by Due Date**
    - **TDD Tests:**  
      - Write failing tests for `sort_tasks_by_due_date(tasks, ascending=True)` ensuring correct order.  
      - Write UI tests for selecting sort order and rendering accordingly.  

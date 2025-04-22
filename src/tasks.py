@@ -110,6 +110,7 @@ def search_tasks(tasks, query):
            query in task.get("description", "").lower()
     ]
 
+
 def get_overdue_tasks(tasks):
     """
     Get tasks that are past their due date and not completed.
@@ -138,6 +139,14 @@ def get_upcoming_tasks(tasks):
         if not task.get("completed", False) and task.get("due_date", "") >= today
     ]
 
+
+def is_task_overdue(task):
+    """
+    Check if a single task is overdue (due_date before today and not completed).
+    """
+    today = datetime.now().strftime("%Y-%m-%d")
+    return not task.get("completed", False) and task.get("due_date", "") < today
+
 def sort_tasks_by_due_date(tasks, ascending=True):
     """
     Sort tasks by their due_date string (YYYY-MM-DD).
@@ -147,6 +156,7 @@ def sort_tasks_by_due_date(tasks, ascending=True):
         key=lambda t: t.get("due_date", ""),
         reverse=not ascending
     )
+
 
 def edit_task(tasks, task_id, updates):
     """
