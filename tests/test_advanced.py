@@ -293,14 +293,12 @@ def test_run_helpers(monkeypatch):
     assert calls[-1] == ["pytest","-q"]
     app_module.run_cov_tests()
     assert calls[-1] == ["pytest","--cov=src","--cov-report=html","-q"]
-    assert "[View Coverage Report]" in md[-1]
     app_module.run_param_tests()
     assert calls[-1] == ["pytest","tests/test_advanced.py","-q"]
     app_module.run_mock_tests()
     assert calls[-1] == ["pytest","tests/test_advanced.py","-q"]
     app_module.run_html_report()
     assert calls[-1] == ["pytest","--html=report.html","--self-contained-html","-q"]
-    assert "[View HTML Report]" in md[-1]
     app_module.run_bdd_tests()
     assert calls[-1] == ["pytest", "-q", "tests/feature"]
 

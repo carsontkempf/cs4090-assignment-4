@@ -303,8 +303,6 @@ def test_run_helpers(monkeypatch):
     assert ["pytest", "--cov=src", "--cov-report=html", "-q"] in ran
     assert ["pytest", "--html=report.html", "--self-contained-html", "-q"] in ran
     assert ["pytest", "-q", "tests/feature"] in ran
-    assert any("View Coverage Report" in m for m in md)
-    assert any("View HTML Report" in m for m in md)
 
  # show_sidebar should append a new task and display a success message
 def test_show_sidebar_adds_task(monkeypatch):

@@ -244,12 +244,22 @@ def run_cov_tests():
         from types import SimpleNamespace
         result = SimpleNamespace(stdout="", stderr="", returncode=getattr(result, "returncode", 0))
     with st.expander("Coverage Tests Output", expanded=True):
+        st.markdown("### Coverage Report")
         st.code(result.stdout + result.stderr, language='bash')
         if result.returncode == 0:
             st.success("✅ Coverage tests passed")
         else:
             st.error("❌ Coverage tests failed")
-    st.markdown("[View Coverage Report](htmlcov/index.html)")
+        # Embed full HTML report inline
+        from pathlib import Path
+        import streamlit.components.v1 as components
+        cov_path = Path(__file__).parent.parent / "htmlcov" / "index.html"
+        try:
+            html = cov_path.read_text(encoding="utf-8")
+            styled = "<style>body { background: white; color: black; }</style>" + html
+            components.html(styled, height=600, scrolling=True)
+        except FileNotFoundError:
+            st.error("Coverage report not found. Did you run the tests?")
 
 # Execute tests for Parameterized and show output in a Streamlit expander
 def run_param_tests():
@@ -305,12 +315,22 @@ def run_html_report():
         rc = getattr(result, "returncode", 0)
         result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
     with st.expander("HTML Report Output", expanded=True):
+        st.markdown("### Test HTML Report")
         st.code(result.stdout + result.stderr, language='bash')
         if result.returncode == 0:
             st.success("✅ HTML report generation passed")
         else:
             st.error("❌ HTML report generation failed")
-    st.markdown("[View HTML Report](report.html)")
+        # Embed full test-report HTML inline
+        from pathlib import Path
+        import streamlit.components.v1 as components
+        rpt_path = Path(__file__).parent.parent / "report.html"
+        try:
+            html = rpt_path.read_text(encoding="utf-8")
+            styled = "<style>body { background: white; color: black; }</style>" + html
+            components.html(styled, height=600, scrolling=True)
+        except FileNotFoundError:
+            st.error("Test report not found. Did you run the tests?")
 
 # Execute tests for BDD and show output in a Streamlit expander
 def run_bdd_tests():
