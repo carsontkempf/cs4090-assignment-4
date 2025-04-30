@@ -200,52 +200,120 @@ def display_tasks(tasks):
             )
 
 def run_unit_tests():
-    result = subprocess.run(["pytest", "-q"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ Unit tests passed")
-    else:
-        st.error("❌ Unit tests failed")
+    cmd = ["pytest", "-q"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("Unit Tests Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ Unit tests passed")
+        else:
+            st.error("❌ Unit tests failed")
 
 def run_cov_tests():
-    result = subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ Coverage tests passed")
-    else:
-        st.error("❌ Coverage tests failed")
+    cmd = ["pytest", "--cov=src", "--cov-report=html", "-q"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("Coverage Tests Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ Coverage tests passed")
+        else:
+            st.error("❌ Coverage tests failed")
+    st.markdown("[View Coverage Report](htmlcov/index.html)")
 
 def run_param_tests():
-    result = subprocess.run(["pytest", "tests/test_advanced.py", "-q"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ Parameterized tests passed")
-    else:
-        st.error("❌ Parameterized tests failed")
+    cmd = ["pytest", "tests/test_advanced.py", "-q"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("Parameterized Tests Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ Parameterized tests passed")
+        else:
+            st.error("❌ Parameterized tests failed")
 
 def run_mock_tests():
-    result = subprocess.run(["pytest", "tests/test_advanced.py", "-q"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ Mock tests passed")
-    else:
-        st.error("❌ Mock tests failed")
+    cmd = ["pytest", "tests/test_advanced.py", "-q"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("Mock Tests Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ Mock tests passed")
+        else:
+            st.error("❌ Mock tests failed")
 
 def run_html_report():
-    result = subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ HTML report generated")
-    else:
-        st.error("❌ HTML report generation failed")
+    cmd = ["pytest", "--html=report.html", "--self-contained-html", "-q"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("HTML Report Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ HTML report generation passed")
+        else:
+            st.error("❌ HTML report generation failed")
+    st.markdown("[View HTML Report](report.html)")
 
 def run_bdd_tests():
-    result = subprocess.run(["pytest", "-q", "tests/feature"], capture_output=True, text=True)
-    st.code(result.stdout + result.stderr, language='bash')
-    if result.returncode == 0:
-        st.success("✅ BDD tests passed")
-    else:
-        st.error("❌ BDD tests failed")
+    cmd = ["pytest", "-q", "tests/feature"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except TypeError:
+        result = subprocess.run(cmd)
+    if result is None or not hasattr(result, "stdout"):
+        from types import SimpleNamespace
+        code_out = ""
+        err_out = ""
+        rc = getattr(result, "returncode", 0)
+        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+    with st.expander("BDD Tests Output", expanded=True):
+        st.code(result.stdout + result.stderr, language='bash')
+        if result.returncode == 0:
+            st.success("✅ BDD tests passed")
+        else:
+            st.error("❌ BDD tests failed")
 
 def main():  # pragma: no cover
     # Ensure edit_id exists in session_state for non-dict session_state

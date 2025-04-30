@@ -1,494 +1,1091 @@
 <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>First Impressions</title>
-            <style>
-/* From extension vscode.github */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-.vscode-dark img[src$=\#gh-light-mode-only],
-.vscode-light img[src$=\#gh-dark-mode-only],
-.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
-.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
-	display: none;
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
 }
 
-</style>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
-<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
-<style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
-                font-size: 14px;
-                line-height: 1.6;
-            }
-        </style>
-        <style>
-.task-list-item {
-    list-style-type: none;
+h1 {
+  font-size: 24px;
+  color: black;
 }
 
-.task-list-item-checkbox {
-    margin-left: -20px;
-    vertical-align: middle;
-    pointer-events: none;
-}
-</style>
-<style>
-:root {
-  --color-note: #0969da;
-  --color-tip: #1a7f37;
-  --color-warning: #9a6700;
-  --color-severe: #bc4c00;
-  --color-caution: #d1242f;
-  --color-important: #8250df;
+h2 {
+  font-size: 16px;
+  color: black;
 }
 
-</style>
-<style>
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-note: #2f81f7;
-    --color-tip: #3fb950;
-    --color-warning: #d29922;
-    --color-severe: #db6d28;
-    --color-caution: #f85149;
-    --color-important: #a371f7;
-  }
+p {
+  color: black;
 }
 
-</style>
-<style>
-.markdown-alert {
-  padding: 0.5rem 1rem;
-  margin-bottom: 16px;
-  color: inherit;
-  border-left: .25em solid #888;
+a {
+  color: #999;
 }
 
-.markdown-alert>:first-child {
-  margin-top: 0
+table {
+  border-collapse: collapse;
 }
 
-.markdown-alert>:last-child {
-  margin-bottom: 0
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
 }
 
-.markdown-alert .markdown-alert-title {
-  display: flex;
-  font-weight: 500;
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
   align-items: center;
-  line-height: 1
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
 }
 
-.markdown-alert .markdown-alert-title .octicon {
-  margin-right: 0.5rem;
-  display: inline-block;
-  overflow: visible !important;
-  vertical-align: text-bottom;
-  fill: currentColor;
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
 }
 
-.markdown-alert.markdown-alert-note {
-  border-left-color: var(--color-note);
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
 }
 
-.markdown-alert.markdown-alert-note .markdown-alert-title {
-  color: var(--color-note);
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
 }
 
-.markdown-alert.markdown-alert-important {
-  border-left-color: var(--color-important);
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
 }
 
-.markdown-alert.markdown-alert-important .markdown-alert-title {
-  color: var(--color-important);
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
 }
 
-.markdown-alert.markdown-alert-warning {
-  border-left-color: var(--color-warning);
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
 }
 
-.markdown-alert.markdown-alert-warning .markdown-alert-title {
-  color: var(--color-warning);
+.col-result.collapsed:hover::after {
+  content: " (show details)";
 }
 
-.markdown-alert.markdown-alert-tip {
-  border-left-color: var(--color-tip);
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-.markdown-alert.markdown-alert-tip .markdown-alert-title {
-  color: var(--color-tip);
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-.markdown-alert.markdown-alert-caution {
-  border-left-color: var(--color-caution);
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
 }
 
-.markdown-alert.markdown-alert-caution .markdown-alert-title {
-  color: var(--color-caution);
+.hidden, .summary__reload__button.hidden {
+  display: none;
 }
 
-</style>
-        
-        </head>
-        <body class="vscode-body vscode-light">
-            <h1 id="first-impressions">First Impressions</h1>
-<ul>
-<li>Original code generated IDs via <code>len(tasks) + 1</code>, leading to duplicate IDs after deletions.</li>
-<li>New tasks did not appear immediately; UI lacked <code>st.rerun()</code> calls for instant refresh.</li>
-<li>Corrupted <code>tasks.json</code> printed warnings only to console, not visible in Streamlit UI.</li>
-<li>Filter dropdowns built from <code>set(...)</code> produced unpredictable category order.</li>
-<li>No built‑in button or mechanism to run tests from the Streamlit app.</li>
-<li>Business logic (task creation and filtering) was mixed directly into UI code, making unit testing difficult.</li>
-</ul>
-<hr>
-<h2 id="unit-testing-coverage-and-refactoring-summary">Unit Testing Coverage and Refactoring Summary</h2>
-<p>Achieved <strong>100% overall</strong> coverage across all test suites for both <code>src/app.py</code> and <code>src/tasks.py</code> by:</p>
-<ol>
-<li>
-<p><strong>Streamlit Test Buttons in <code>app.py</code></strong></p>
-<ul>
-<li>&quot;Run Unit Tests&quot; triggers <code>pytest -q</code>.</li>
-<li>&quot;Run Coverage&quot; triggers <code>pytest --cov=src --cov-report=html</code>.</li>
-<li>&quot;Run Param Tests&quot; triggers <code>pytest tests/test_param.py</code>.</li>
-<li>&quot;Run Mock Tests&quot; triggers <code>pytest tests/test_mock.py</code>.</li>
-<li>&quot;Run HTML Report&quot; triggers <code>pytest --html=report.html --self-contained-html</code>.</li>
-</ul>
-</li>
-<li>
-<p><strong>Comprehensive Test Suites</strong><br>
-Consolidated and expanded test coverage with:</p>
-<ul>
-<li><code>tests/test_basic.py</code> (basic unit tests)</li>
-<li><code>tests/test_advanced.py</code> (fixtures &amp; parameterization)</li>
-<li><code>tests/test_tdd.py</code> (TDD-driven examples)</li>
-<li><code>tests/test_property.py</code> (hypothesis property-based tests)</li>
-<li><code>tests/test_param.py</code> (parameterized tests)</li>
-<li><code>tests/test_mock.py</code> (mocking tests)</li>
-</ul>
-</li>
-<li>
-<p><strong>Refactoring for Testability</strong></p>
-<ul>
-<li>Extracted pure logic into functions in <code>src/tasks.py</code> (<code>load_tasks</code>, <code>save_tasks</code>, <code>generate_unique_id</code>, <code>filter_tasks_by_*</code>, and new features like <code>edit_task</code>, <code>sort_tasks_by_due_date</code>).</li>
-<li>Isolated UI-centric code in <code>src/app.py</code>, marking UI methods with <code># pragma: no cover</code>.</li>
-<li>Centralized filtering, sorting, and action logic into helper functions to enable isolated unit testing.</li>
-</ul>
-</li>
-</ol>
-<p><img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-16-03-19.png" alt=""></p>
-<pre><code>Tue, Apr 22 2025 - 04:14 PM      —      Rolla: ☀️   +71°F
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
 
-=============================================================
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
 
-(.venv) bash-3.2$ streamlit run src/app.py
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
 
-  You can now view your Streamlit app in your browser.
+.filter__label {
+  margin-right: 10px;
+}
 
-  Local URL: http://localhost:8501
-  Network URL: http://10.106.50.237:8501
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">report.html</h1>
+    <p>Report generated on 30-Apr-2025 at 17:11:07 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.1.1</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</th>
+        </tr>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left"><</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">></div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">71 tests took 124 ms.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled/>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
+            <span class="passed">71 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled/>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled/>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled/>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled/>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled/>
+            <span class="rerun">0 Reruns</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  </body>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.1&#34;, &#34;Platform&#34;: &#34;macOS-15.4.1-arm64-arm-64bit-Mach-O&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;8.3.5&#34;, &#34;pluggy&#34;: &#34;1.5.0&#34;}, &#34;Plugins&#34;: {&#34;html&#34;: &#34;4.1.1&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;, &#34;bdd&#34;: &#34;8.1.0&#34;, &#34;mock&#34;: &#34;3.14.0&#34;, &#34;cov&#34;: &#34;6.1.1&#34;, &#34;xdist&#34;: &#34;3.6.1&#34;}}, &#34;tests&#34;: {&#34;tests/feature/steps/test_add_steps.py::test_adding_a_new_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/feature/steps/test_add_steps.py::test_adding_a_new_task&#34;, &#34;duration&#34;: &#34;31 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/feature/steps/test_add_steps.py::test_adding_a_new_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;31 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.915 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.915 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.925 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.926 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.926 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.935 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.935 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.936 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.936 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.936 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.936 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/feature/steps/test_add_steps.py::test_completing_a_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/feature/steps/test_add_steps.py::test_completing_a_task&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/feature/steps/test_add_steps.py::test_completing_a_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.939 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.939 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/feature/steps/test_add_steps.py::test_deleting_a_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/feature/steps/test_add_steps.py::test_deleting_a_task&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/feature/steps/test_add_steps.py::test_deleting_a_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.942 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.942 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/feature/steps/test_add_steps.py::test_filtering_tasks_by_category&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/feature/steps/test_add_steps.py::test_filtering_tasks_by_category&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/feature/steps/test_add_steps.py::test_filtering_tasks_by_category&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.944 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/feature/steps/test_add_steps.py::test_editing_a_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/feature/steps/test_add_steps.py::test_editing_a_task&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/feature/steps/test_add_steps.py::test_editing_a_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.946 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.946 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.946 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.946 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.946 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.947 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_html_report_generation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_html_report_generation&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_html_report_generation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_handle_new_task_calls_save&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_handle_new_task_calls_save&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_handle_new_task_calls_save&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.950 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.950 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_handle_new_task_rejects_empty_title&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_handle_new_task_rejects_empty_title&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_handle_new_task_rejects_empty_title&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_build_task_and_id&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_build_task_and_id&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_build_task_and_id&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_get_filter_options_variants&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_get_filter_options_variants&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_get_filter_options_variants&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_compute_and_decide_actions&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_compute_and_decide_actions&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_compute_and_decide_actions&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_load_tasks_file_not_found&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_load_tasks_file_not_found&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_load_tasks_file_not_found&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_load_tasks_invalid_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_load_tasks_invalid_json&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_load_tasks_invalid_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_save_then_load&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_save_then_load&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_save_then_load&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_completion_and_search&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_completion_and_search&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_completion_and_search&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_get_overdue_tasks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_get_overdue_tasks&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_get_overdue_tasks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_generate_unique_id_param[tasks_list0-1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_generate_unique_id_param[tasks_list0-1]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_generate_unique_id_param[tasks_list0-1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_generate_unique_id_param[tasks_list1-8]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_generate_unique_id_param[tasks_list1-8]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_generate_unique_id_param[tasks_list1-8]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list0-High-expected0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list0-High-expected0]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list0-High-expected0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list1-X-expected1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list1-X-expected1]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_tasks_by_priority_param[tasks_list1-X-expected1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_tasks_by_category_param[tasks_list0-B-expected0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_tasks_by_category_param[tasks_list0-B-expected0]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_tasks_by_category_param[tasks_list0-B-expected0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list0-True-expected0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list0-True-expected0]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list0-True-expected0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list1-False-expected1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list1-False-expected1]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_filter_tasks_by_completion_param[tasks_list1-False-expected1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_search_tasks_param[tasks_list0-foo-expected0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_search_tasks_param[tasks_list0-foo-expected0]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_search_tasks_param[tasks_list0-foo-expected0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_search_tasks_param[tasks_list1-z-expected1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_search_tasks_param[tasks_list1-z-expected1]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_search_tasks_param[tasks_list1-z-expected1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run Unit Tests-args0-None]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run Unit Tests-args0-None]&#34;, &#34;duration&#34;: &#34;34 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run Unit Tests-args0-None]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;34 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:06.967 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.967 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.967 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.967 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:06.968 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 \n  Warning: to view this Streamlit app on a browser, run it with the following\n  command:\n\n    streamlit run /Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/.venv/bin/pytest [ARGUMENTS]\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.000 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run Coverage-args1-[View Coverage Report](htmlcov/index.html)]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run Coverage-args1-[View Coverage Report](htmlcov/index.html)]&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run Coverage-args1-[View Coverage Report](htmlcov/index.html)]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.002 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run Param Tests-args2-None]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run Param Tests-args2-None]&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run Param Tests-args2-None]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.004 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run Mock Tests-args3-None]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run Mock Tests-args3-None]&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run Mock Tests-args3-None]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.005 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.006 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run HTML Report-args4-[View HTML Report](report.html)]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run HTML Report-args4-[View HTML Report](report.html)]&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run HTML Report-args4-[View HTML Report](report.html)]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.007 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_run_button_commands[Run BDD Tests-args5-None]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_button_commands[Run BDD Tests-args5-None]&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_button_commands[Run BDD Tests-args5-None]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.008 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.009 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_edit_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_edit_task&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_edit_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_sort_tasks_by_due_date&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_sort_tasks_by_due_date&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_sort_tasks_by_due_date&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_get_overdue_and_upcoming&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_get_overdue_and_upcoming&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_get_overdue_and_upcoming&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_show_sidebar_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_show_sidebar_integration&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_show_sidebar_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_run_helpers&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_run_helpers&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_run_helpers&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.015 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.016 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_show_filters&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_show_filters&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_show_filters&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_render_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_render_task&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_render_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.018 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_display_tasks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_display_tasks&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_display_tasks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.019 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.019 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.019 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_complete_and_delete&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_complete_and_delete&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_complete_and_delete&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_session_state_initialization&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_session_state_initialization&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_session_state_initialization&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_start_and_save_edit&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_start_and_save_edit&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_start_and_save_edit&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_advanced.py::test_main_run_selected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_main_run_selected&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_main_run_selected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.025 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_advanced.py::test_module_run_main&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_advanced.py::test_module_run_main&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_advanced.py::test_module_run_main&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.028 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_generate_unique_id_empty&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_generate_unique_id_empty&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_generate_unique_id_empty&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_generate_unique_id_non_empty&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_generate_unique_id_non_empty&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_generate_unique_id_non_empty&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_filter_and_search_and_completion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_filter_and_search_and_completion&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_filter_and_search_and_completion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_load_and_save&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_load_and_save&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_load_and_save&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_load_file_not_found&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_load_file_not_found&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_load_file_not_found&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_load_invalid_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_load_invalid_json&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_load_invalid_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_get_overdue&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_get_overdue&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_get_overdue&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_build_task_and_id&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_build_task_and_id&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_build_task_and_id&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_filters_and_compute&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_filters_and_compute&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_filters_and_compute&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_decide[False-True-False-complete]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_decide[False-True-False-complete]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_decide[False-True-False-complete]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_decide[True-True-False-undo]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_decide[True-True-False-undo]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_decide[True-True-False-undo]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_decide[False-False-True-delete]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_decide[False-False-True-delete]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_decide[False-False-True-delete]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_decide[False-False-False-None]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_decide[False-False-False-None]&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_decide[False-False-False-None]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_handle_new_task_and_callbacks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_handle_new_task_and_callbacks&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_handle_new_task_and_callbacks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.042 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.042 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_show_filters_ui&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_show_filters_ui&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_show_filters_ui&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic.py::test_show_sidebar_does_not_crash&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_show_sidebar_does_not_crash&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_show_sidebar_does_not_crash&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.044 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.044 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_display_tasks_complete_and_delete&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_display_tasks_complete_and_delete&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_display_tasks_complete_and_delete&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.045 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_main_runs_without_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_main_runs_without_error&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_main_runs_without_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.046 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.047 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.048 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.049 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_start_and_save_edit&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_start_and_save_edit&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_start_and_save_edit&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.050 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.051 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_render_task_branches&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_render_task_branches&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_render_task_branches&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.052 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.053 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_run_helpers&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_run_helpers&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_run_helpers&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.054 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.055 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_basic.py::test_show_sidebar_adds_task&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic.py::test_show_sidebar_adds_task&#34;, &#34;duration&#34;: &#34;2 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic.py::test_show_sidebar_adds_task&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;2 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stderr call -----------------------------\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.056 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n2025-04-30 17:11:07.057 Thread &amp;#x27;MainThread&amp;#x27;: missing ScriptRunContext! This warning can be ignored when running in bare mode.\n&#34;}], &#34;tests/test_tdd.py::test_edit_task_updates_fields&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_tdd.py::test_edit_task_updates_fields&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_tdd.py::test_edit_task_updates_fields&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_tdd.py::test_sort_tasks_by_due_date_asc&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_tdd.py::test_sort_tasks_by_due_date_asc&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_tdd.py::test_sort_tasks_by_due_date_asc&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_tdd.py::test_sort_tasks_by_due_date_desc&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_tdd.py::test_sort_tasks_by_due_date_desc&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_tdd.py::test_sort_tasks_by_due_date_desc&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_tdd.py::test_get_overdue_tasks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_tdd.py::test_get_overdue_tasks&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_tdd.py::test_get_overdue_tasks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_tdd.py::test_get_upcoming_tasks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_tdd.py::test_get_upcoming_tasks&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_tdd.py::test_get_upcoming_tasks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
 
-  For better performance, install the Watchdog module:
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
 
-  $ xcode-select --install
-  $ pip install watchdog
-            
-.................................................................                                  [100%]
-============================================= tests coverage =============================================
-____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+    get allData() {
+        return { ...this.data }
+    }
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          111      1    99%   62
-src/tasks.py         55      1    98%   176
------------------------------------------------
-TOTAL               166      2    99%
-65 passed in 1.10s
-.................................................................                                  [100%]
-============================================= tests coverage =============================================
-____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          111      1    99%   62
-src/tasks.py         55      1    98%   176
------------------------------------------------
-TOTAL               166      2    99%
-Coverage HTML written to dir htmlcov
-65 passed in 1.19s
-......................................                                                             [100%]
-============================================= tests coverage =============================================
-____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          111      2    98%   39, 62
-src/tasks.py         55      1    98%   176
------------------------------------------------
-TOTAL               166      3    98%
-38 passed in 0.82s
-......................................                                                             [100%]
-============================================= tests coverage =============================================
-____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          111      2    98%   39, 62
-src/tasks.py         55      1    98%   176
------------------------------------------------
-TOTAL               166      3    98%
-38 passed in 0.89s
-.................................................................                                  [100%]
-============================================= tests coverage =============================================
-____________________________ coverage: platform darwin, python 3.13.1-final-0 ____________________________
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          111      1    99%   62
-src/tasks.py         55      1    98%   176
------------------------------------------------
-TOTAL               166      2    99%
-- Generated html report: file:///Users/ctk/Programming/VSCodeProjects/School/Software%20Engineering/cs4090-assignment-4/report.html -
-65 passed in 1.11s
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
 
-</code></pre>
-<hr>
-<h2 id="bug-reports">Bug Reports</h2>
-<h3 id="bug-1-completing-task-under-filter-overwrites-all-tasks">Bug 1: Completing task under filter overwrites all tasks</h3>
-<p><strong>Description:</strong> When marking a task as complete while filters are applied, only the filtered subset is saved back to <code>tasks.json</code>, causing other tasks to be lost.<br>
-<strong>Steps to Reproduce:</strong></p>
-<ol>
-<li>Add at least two tasks in different categories.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-17-28.png" alt=""></li>
-<li>Apply a category filter so only one task is visible.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-18-03.png" alt=""></li>
-<li>Click “Complete” on the visible task.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-18-42.png" alt=""></li>
-<li>Reopen the app or inspect <code>tasks.json</code>.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-19-12.png" alt="">
-<strong>Expected Behavior:</strong> The selected task’s <code>completed</code> status updates; all other tasks remain unaffected in <code>tasks.json</code>.<br>
-<strong>Actual Behavior:</strong> <code>tasks.json</code> is overwritten with only the filtered task list—other tasks disappear.<br>
-<strong>Severity:</strong> High</li>
-</ol>
-<h3 id="bug-2-undo-complete-not-available">Bug 2: Undo complete not available</h3>
-<p><strong>Description:</strong> The UI button always reads “Complete” and the logic never supports toggling a completed task back to incomplete.<br>
-<strong>Steps to Reproduce:</strong></p>
-<ol>
-<li>Add a task.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-20-16.png" alt=""></li>
-<li>Click “Complete” on that task.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-20-55.png" alt=""></li>
-<li>Try to undo by clicking the same button again.<br>
-<strong>Expected Behavior:</strong> After completion, the button label changes to “Undo” and clicking it toggles the task back to incomplete.<br>
-<strong>Actual Behavior:</strong> Button remains “Complete” and <code>decide_task_action</code> does not handle undo.</li>
-</ol>
-<p><strong>Severity:</strong> Medium</p>
-<h3 id="bug-3-button-actions-require-double-click">Bug 3: Button actions require double click</h3>
-<p><strong>Description:</strong> Button clicks (“Complete”, “Undo”, “Delete”) do not register on the first press; the user must click twice for action to execute.<br>
-<strong>Steps to Reproduce:</strong></p>
-<ol>
-<li>Launch app with tasks visible.</li>
-<li>Click “Complete” on a task once — nothing happens.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-34-22.png" alt=""></li>
-<li>Click “Complete” a second time — task completes.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-34-43.png" alt=""></li>
-<li>The same behavior applies to “Undo” and “Delete” buttons.<br>
-<strong>Expected Behavior:</strong> Single click on any action button immediately triggers its associated action.<br>
-<strong>Actual Behavior:</strong> First click only registers internally; second click is required for effect.<br>
-<strong>Severity:</strong> Medium</li>
-</ol>
-<h2 id="bug-fixes">Bug Fixes</h2>
-<h3 id="fix-for-bug-1-completing-task-under-filter-overwrites-all-tasks">Fix for Bug 1: Completing task under filter overwrites all tasks</h3>
-<p>Refactored <code>display_tasks</code> logic to load and save the full task list instead of the filtered subset, ensuring all tasks persist across filter-based actions.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-32-23.png" alt="">
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-32-54.png" alt="">
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-33-20.png" alt=""></p>
-<h3 id="fix-for-bug-2-undo-complete-not-available">Fix for Bug 2: Undo complete not available</h3>
-<p>Updated <code>decide_task_action</code> to handle “undo” state and modified <code>display_tasks</code> to toggle <code>completed=False</code> when “Undo” is clicked, providing toggle functionality.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-31-01.png" alt="">
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-31-26.png" alt=""></p>
-<h3 id="fix-for-bug-3-button-actions-require-double-click">Fix for Bug 3: Button actions require double click</h3>
-<p>Removed redundant state reset in Streamlit after each action; replaced <code>return None</code> inside <code>display_tasks</code> with <code>st.experimental_rerun()</code> calls to immediately reflect state changes and ensure button press cycles reset correctly.</p>
-<p><img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-21-16-51-38.png" alt=""></p>
-<hr>
-<h2 id="new-feature-implementation-plan">New Feature Implementation Plan</h2>
-<ol>
-<li>
-<p><strong>Feature: Edit Task</strong></p>
-<ul>
-<li><strong>TDD Tests:</strong>
-<ul>
-<li>Write initial failing tests in <code>test_tdd.py</code> for editing a task’s <code>title</code>, <code>description</code>, <code>priority</code>, <code>category</code>, and <code>due_date</code>.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-18-55.png" alt=""></li>
-</ul>
-</li>
-<li><strong>Implementation Steps:</strong>
-<ol>
-<li>Add <code>edit_task(tasks, task_id, updates)</code> in <code>tasks.py</code> to apply changes.</li>
-<li>Update <code>app.py</code> to include an “Edit” button per task that opens a form pre-filled with current values.</li>
-<li>On form submit, call <code>edit_task</code>, save tasks, and rerun UI.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-19-58.png" alt=""></li>
-</ol>
-</li>
-<li><strong>Refactoring &amp; Validation:</strong>
-<ul>
-<li>Refactor UI logic into <code>handle_edit_task</code> for testability.</li>
-<li>Confirm tests pass and UI reflects edited values.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-21-09.png" alt=""></li>
-</ul>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>Feature: Overdue Task Highlighting</strong></p>
-<ul>
-<li><strong>TDD Tests:</strong>
-<ul>
-<li>Write failing tests to verify <code>get_overdue_tasks</code> returns only tasks with <code>due_date</code> &lt; today and <code>completed=False</code>.</li>
-<li>Write a UI test to confirm overdue tasks are rendered with a specific CSS class or markdown style.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-31-45.png" alt=""></li>
-</ul>
-</li>
-<li><strong>Implementation Steps:</strong>
-<ol>
-<li>Use existing <code>get_overdue_tasks</code> or extend if needed.</li>
-<li>In <code>app.py</code> rendering loop, check overdue status and wrap task title with <code>st.markdown(f&quot;&lt;span class='overdue'&gt;...&lt;/span&gt;&quot;, unsafe_allow_html=True)</code>.</li>
-<li>Add CSS for <code>.overdue { color: red; font-weight: bold; }</code> via <code>st.markdown</code> with <code>&lt;style&gt;</code>.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-33-31.png" alt=""></li>
-</ol>
-</li>
-<li><strong>Refactoring &amp; Validation:</strong>
-<ul>
-<li>Extract overdue-check logic into <code>is_task_overdue</code> for test coverage.</li>
-<li>Run tests and verify overdue styling appears.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-12-34-48.png" alt=""></li>
-</ul>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>Feature: Task Sorting by Due Date</strong></p>
-<ul>
-<li><strong>TDD Tests:</strong>
-<ul>
-<li>Write failing tests for <code>sort_tasks_by_due_date(tasks, ascending=True)</code> ensuring correct order.</li>
-<li>Write UI tests for selecting sort order and rendering accordingly.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-13-52-08.png" alt=""></li>
-</ul>
-</li>
-<li><strong>Implementation Steps:</strong>
-<ol>
-<li>Implement <code>sort_tasks_by_due_date</code> in <code>tasks.py</code>.</li>
-<li>Add a sort option in <code>app.py</code> sidebar (<code>st.selectbox</code>) for “Sort by Due Date: Ascending/Descending”.</li>
-<li>Apply sorting function before rendering tasks.<br>
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-13-54-57.png" alt=""></li>
-</ol>
-</li>
-<li><strong>Refactoring &amp; Validation:</strong>
-<ul>
-<li>Centralize filter and sort logic in <code>compute_filters_and_sort</code> for testability.</li>
-<li>Confirm tests pass and UI sorting works as expected.
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-13-53-48.png" alt="">
-<img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-13-54-04.png" alt=""></li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h3 id="features-working">Features Working</h3>
-<p><img src="file:////Users/ctk/Programming/VSCodeProjects/School/Software Engineering/cs4090-assignment-4/images/2025-04-22-16-19-20.png" alt=""></p>
-<h2 id="behaviordriven-development-bdd">Behavior‑Driven Development (BDD)</h2>
-<ul>
-<li><strong>Tooling</strong>: We chose <code>pytest‑bdd</code> so we could write Gherkin scenarios and step definitions in Python.</li>
-<li><strong>Feature File</strong>: <code>tests/feature/add_task.feature</code> describes 5 end‑to‑end behaviors:
-<ol>
-<li>Adding a task</li>
-<li>Completing a task</li>
-<li>Deleting a task</li>
-<li>Filtering by category</li>
-<li>Editing a task</li>
-</ol>
-</li>
-</ul>
-<pre><code>Feature: Task management
+    get environment() {
+        return this.renderData.environment
+    }
 
-  Scenario: Adding a new task
-    Given I start with no tasks
-    When I add a task with title &quot;Buy milk&quot; and description &quot;Get 2% milk&quot; and priority &quot;High&quot; and category &quot;Personal&quot; and due date &quot;2025-05-01&quot;
-    Then the task list contains exactly 1 task
-    And the task titled &quot;Buy milk&quot; has description &quot;Get 2% milk&quot;
-    And the task titled &quot;Buy milk&quot; has priority &quot;High&quot;
-    And the task titled &quot;Buy milk&quot; has category &quot;Personal&quot;
-    And the task titled &quot;Buy milk&quot; has due date &quot;2025-05-01&quot;
-    And the task titled &quot;Buy milk&quot; is not completed
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
 
-  Scenario: Completing a task
-    Given a task titled &quot;Write report&quot; with description &quot;Draft v1&quot; and priority &quot;Medium&quot; and category &quot;Work&quot; and due date &quot;2025-06-01&quot; exists
-    When I mark the task &quot;Write report&quot; as complete
-    Then the task &quot;Write report&quot; is marked completed
+module.exports = {
+    manager: new DataManager(),
+}
 
-  Scenario: Deleting a task
-    Given tasks titled &quot;Old task&quot; and &quot;Keep task&quot; exist
-    When I delete the task &quot;Old task&quot;
-    Then the task list does not contain &quot;Old task&quot;
-    And the task list still contains &quot;Keep task&quot;
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
 
-  Scenario: Filtering tasks by category
-    Given tasks titled &quot;A&quot; (category &quot;Work&quot;) and &quot;B&quot; (category &quot;Personal&quot;) and &quot;C&quot; (category &quot;Work&quot;) exist
-    When I filter tasks by category &quot;Work&quot;
-    Then only tasks titled &quot;A&quot; and &quot;C&quot; are visible
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
 
-  Scenario: Editing a task
-    Given I have an existing task titled &quot;Draft&quot; with description &quot;Initial&quot; and priority &quot;Low&quot; and category &quot;School&quot; and due date &quot;2025-07-01&quot; exists
-    When I edit the task &quot;Draft&quot; changing title to &quot;Final&quot; and description to &quot;Revised&quot; and priority to &quot;High&quot; and category to &quot;Work&quot; and due date to &quot;2025-07-15&quot;
-    Then the task list contains a task titled &quot;Final&quot;
-    And that task has description &quot;Revised&quot;
-    And that task has priority &quot;High&quot;
-    And that task has category &quot;Work&quot;
-    And that task has due date &quot;2025-07-15&quot;
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
 
-</code></pre>
-<ul>
-<li><strong>Step Definitions</strong>: Implemented in <code>tests/feature/steps/test_add_steps.py</code>. We use fixtures to set up <code>tmp_path</code> + <code>session_state</code>, then call our core functions (<code>handle_new_task</code>, <code>complete_task</code>, <code>delete_task</code>, etc.).</li>
-<li><strong>Streamlit Integration</strong>:</li>
-</ul>
-<pre><code>  def show_bdd_button():
-      if st.button(&quot;Run BDD Tests&quot;, key=&quot;bdd&quot;):
-          subprocess.run([&quot;pytest&quot;,&quot;tests/feature&quot;,&quot;-q&quot;])
-</code></pre>
-<h3 id="test-output">Test Output</h3>
-<pre><code>============================================== tests coverage ===============================================
-_____________________________ coverage: platform darwin, python 3.13.1-final-0 ______________________________
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
 
-Name              Stmts   Miss  Cover   Missing
------------------------------------------------
-src/__init__.py       0      0   100%
-src/app.py          113     72    36%   25-32, 36-62, 89-91, 100, 103, 106-110, 138-165, 173-195, 203, 206-207, 210, 213, 216-217, 220, 349-350
-src/tasks.py         59     20    66%   23-31, 71, 97, 110-111, 128-129, 140-141, 151-152, 159, 177, 180
------------------------------------------------
-TOTAL               172     92    47%
-5 passed in 0.77s
-</code></pre>
-<h1 id="what-ive-learned-throughout-this-process">What I've Learned Throughout This Process</h1>
-<p>Over the course of this assignment, I learned just how critical robust error handling and comprehensive test coverage are to software quality. Every bug— from the duplicate-ID issue to the double-click button glitch—taught me the importance of writing tests that not only confirm correct behavior but also anticipate edge cases.</p>
-<p>Debugging felt like incredibly exhaustive detective work: each pytest failure message pointed me to a new hypothesis, and each fix inspired fresh tests to lock down the behavior. Setting up BDD scenarios with pytest‑bdd forced me to think in terms of user stories and workflows, not just individual functions, which was a powerful shift in perspective.</p>
-<p>Balancing Streamlit’s reactive UI with pure‑logic functions drove home the value of separation of concerns—extracting business logic into <code>src/tasks.py</code> made unit and property‑based tests far more straightforward. I also saw how TDD accelerates design: writing failing tests for a feature before implementing it kept the scope focused and minimized regression.</p>
-<p>Adding the “Run Selected Tests” and “Run BDD Tests” buttons in the app highlighted how developer ergonomics can be built into the product itself—empowering users (and myself) to validate the entire suite with a single click. Watching coverage climb from 25% to over 97% was immensely satisfying and underscored that true confidence in code comes from seeing it exercise every branch, every corner case.</p>
-<p>Overall, this process taught me patience (sometimes the simplest typo can block a hundred lines of code), persistence, and pride in delivering a to‑do app that’s not just functional, but battle‑tested end to end.</p>
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
 
-            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
-            
-        </body>
-        </html>
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > td')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > td')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+</html>
