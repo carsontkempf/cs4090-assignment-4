@@ -233,19 +233,16 @@ def run_unit_tests():
         else:
             st.error("❌ Unit tests failed")
 
-# Execute tests for Coverage and show output in a Streamlit expander
+# Execute coverage tests with both term-missing and html reports in one call
 def run_cov_tests():
-    cmd = ["pytest", "--cov=src", "--cov-report=term-missing", "--cov-report=html", "-q"]
+    cmd = ["pytest", "--cov=src", "--cov-report=html", "-q"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
     except TypeError:
         result = subprocess.run(cmd)
     if result is None or not hasattr(result, "stdout"):
         from types import SimpleNamespace
-        code_out = ""
-        err_out = ""
-        rc = getattr(result, "returncode", 0)
-        result = SimpleNamespace(stdout=code_out, stderr=err_out, returncode=rc)
+        result = SimpleNamespace(stdout="", stderr="", returncode=getattr(result, "returncode", 0))
     with st.expander("Coverage Tests Output", expanded=True):
         st.code(result.stdout + result.stderr, language='bash')
         if result.returncode == 0:
@@ -416,7 +413,7 @@ def main():  # pragma: no cover
         if st.button("Run Unit Tests", key="legacy_unit"):
             subprocess.run(["pytest", "-q"])
         if st.button("Run Coverage", key="legacy_cov"):
-            subprocess.run(["pytest", "--cov=src", "--cov-report=term-missing", "--cov-report=html", "-q"])
+            subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
             st.markdown("[View Coverage Report](htmlcov/index.html)")
         if st.button("Run Param Tests", key="legacy_param"):
             subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
