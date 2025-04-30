@@ -200,24 +200,52 @@ def display_tasks(tasks):
             )
 
 def run_unit_tests():
-    subprocess.run(["pytest", "-q"])
+    result = subprocess.run(["pytest", "-q"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ Unit tests passed")
+    else:
+        st.error("❌ Unit tests failed")
 
 def run_cov_tests():
-    subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
-    st.markdown("[View Coverage Report](htmlcov/index.html)")
+    result = subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ Coverage tests passed")
+    else:
+        st.error("❌ Coverage tests failed")
 
 def run_param_tests():
-    subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+    result = subprocess.run(["pytest", "tests/test_advanced.py", "-q"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ Parameterized tests passed")
+    else:
+        st.error("❌ Parameterized tests failed")
 
 def run_mock_tests():
-    subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
+    result = subprocess.run(["pytest", "tests/test_advanced.py", "-q"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ Mock tests passed")
+    else:
+        st.error("❌ Mock tests failed")
 
 def run_html_report():
-    subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"])
-    st.markdown("[View HTML Report](report.html)")
+    result = subprocess.run(["pytest", "--html=report.html", "--self-contained-html", "-q"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ HTML report generated")
+    else:
+        st.error("❌ HTML report generation failed")
 
 def run_bdd_tests():
-    subprocess.run(["pytest", "-q", "tests/feature"])
+    result = subprocess.run(["pytest", "-q", "tests/feature"], capture_output=True, text=True)
+    st.code(result.stdout + result.stderr, language='bash')
+    if result.returncode == 0:
+        st.success("✅ BDD tests passed")
+    else:
+        st.error("❌ BDD tests failed")
 
 def main():  # pragma: no cover
     # Ensure edit_id exists in session_state for non-dict session_state
