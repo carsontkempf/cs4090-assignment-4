@@ -30,6 +30,7 @@ class DummyCM:
     def __enter__(self): return self
     def __exit__(self, *args): pass
 
+ # Verify that pytest can generate a self-contained HTML report
 # --- HTML report generation test ---
 def test_html_report_generation(tmp_path, monkeypatch):
     report_file = tmp_path / "report.html"
@@ -44,7 +45,9 @@ def test_html_report_generation(tmp_path, monkeypatch):
     assert result.returncode == 0
     assert report_file.exists()
 
+# Test core task functions with mocked filesystem interactions
 # --- Mock tests ---
+ # Ensure handle_new_task invokes save_tasks when adding a valid task
 def test_handle_new_task_calls_save(tmp_path, monkeypatch):
     fp = tmp_path / "tasks.json"
     monkeypatch.setenv("DEFAULT_TASKS_FILE", str(fp))
@@ -60,10 +63,12 @@ def test_handle_new_task_calls_save(tmp_path, monkeypatch):
     saved = tasks_module.load_tasks(file_path=str(fp))
     assert saved and saved[0]["title"] == "T"
 
+ # Verify handle_new_task returns None for empty title submissions
 def test_handle_new_task_rejects_empty_title():
     result = handle_new_task([], True, "", "desc", "Low", "Cat", date(2025, 1, 1))
     assert result is None
 
+ # Check build_task assigns correct unique ID and formats dates
 def test_build_task_and_id(monkeypatch):
     fake_now = datetime(2025, 4, 21, 8, 0, 0)
     class FakeDT:
@@ -75,6 +80,7 @@ def test_build_task_and_id(monkeypatch):
     assert t["due_date"] == "2025-01-01"
     assert t["created_at"].startswith("2025-04-21")
 
+ # Validate get_filter_options returns sorted categories and fixed priorities
 def test_get_filter_options_variants():
     cats, pris = app_module.get_filter_options(
         [{"category":"Z"}, {"category":"A"}, {"category":"Z"}]
@@ -82,6 +88,7 @@ def test_get_filter_options_variants():
     assert cats == ["A", "Z"]
     assert pris == ["High", "Medium", "Low"]
 
+ # Confirm compute_filters and decide_task_action behave as expected
 def test_compute_and_decide_actions():
     assert compute_filters("A","B",False) == ("A","B",False)
     assert decide_task_action({"completed":False}, True, False) == "complete"
@@ -89,10 +96,12 @@ def test_compute_and_decide_actions():
     assert decide_task_action({"completed":False}, False, True) == "delete"
     assert decide_task_action({"completed":False}, False, False) is None
 
+ # Verify load_tasks returns empty list when file is missing
 def test_load_tasks_file_not_found(tmp_path):
     fp = tmp_path / "nofile.json"
     assert load_tasks(file_path=str(fp)) == []
 
+ # Confirm load_tasks handles invalid JSON by warning and returning []
 def test_load_tasks_invalid_json(tmp_path, capsys):
     fp = tmp_path / "bad.json"
     fp.write_text("###")
@@ -101,12 +110,14 @@ def test_load_tasks_invalid_json(tmp_path, capsys):
     assert "invalid JSON" in captured
     assert out == []
 
+ # Ensure save_tasks writes JSON that load_tasks can read back correctly
 def test_save_then_load(tmp_path):
     fp = tmp_path / "t.json"
     data = [{"id":1,"title":"x"}]
     save_tasks(data, file_path=str(fp))
     assert load_tasks(file_path=str(fp)) == data
 
+ # Test filter_tasks_by_completion and search_tasks functionality
 def test_filter_completion_and_search():
     tasks = [
         {"completed":True, "title":"foo", "description":"bar"},
@@ -129,7 +140,9 @@ def test_get_overdue_tasks(monkeypatch):
     ]
     assert get_overdue_tasks(tasks) == [tasks[0]]
 
+# Run parameterized tests for generate_unique_id, filters, and search
 # --- Parameterized tests ---
+ # Parameterized test for generate_unique_id edge cases
 @pytest.mark.parametrize("tasks_list,expected", [
     ([], 1),
     ([{"id":2},{"id":7}], 8),
@@ -137,6 +150,7 @@ def test_get_overdue_tasks(monkeypatch):
 def test_generate_unique_id_param(tasks_list, expected):
     assert generate_unique_id(tasks_list) == expected
 
+ # Parameterized test for filter_tasks_by_priority_param
 @pytest.mark.parametrize("tasks_list,priority,expected", [
     ([{"priority":"High"},{"priority":"Low"}], "High", [{"priority":"High"}]),
     ([{"priority":"X"},{"priority":"X"}], "X", [{"priority":"X"},{"priority":"X"}]),
@@ -144,12 +158,14 @@ def test_generate_unique_id_param(tasks_list, expected):
 def test_filter_tasks_by_priority_param(tasks_list, priority, expected):
     assert filter_tasks_by_priority(tasks_list, priority) == expected
 
+ # Parameterized test for filter_tasks_by_category_param
 @pytest.mark.parametrize("tasks_list,category,expected", [
     ([{"category":"A"},{"category":"B"}], "B", [{"category":"B"}]),
 ])
 def test_filter_tasks_by_category_param(tasks_list, category, expected):
     assert filter_tasks_by_category(tasks_list, category) == expected
 
+ # Parameterized test for test_filter_tasks_by_completion_param
 @pytest.mark.parametrize("tasks_list,completed,expected", [
     ([{"completed":True},{"completed":False}], True, [{"completed":True}]),
     ([{"completed":True},{"completed":False}], False, [{"completed":False}]),
@@ -157,6 +173,7 @@ def test_filter_tasks_by_category_param(tasks_list, category, expected):
 def test_filter_tasks_by_completion_param(tasks_list, completed, expected):
     assert filter_tasks_by_completion(tasks_list, completed) == expected
 
+ # Parameterized test for test_search_tasks_param
 @pytest.mark.parametrize("tasks_list,query,expected", [
     ([{"title":"Foo","description":"Bar"}], "foo", [{"title":"Foo","description":"Bar"}]),
     ([{"title":"X","description":"Y"}], "z", []),
@@ -164,7 +181,9 @@ def test_filter_tasks_by_completion_param(tasks_list, completed, expected):
 def test_search_tasks_param(tasks_list, query, expected):
     assert search_tasks(tasks_list, query) == expected
 
+# Integration tests for Streamlit UI run buttons with mocked inputs
 # --- Mock integration tests for app buttons and UI flows ---
+ # Check each app button triggers correct pytest command and link
 @pytest.mark.parametrize("label,args,link", [
     ("Run Unit Tests", ["pytest","-q"], None),
     ("Run Coverage", ["pytest","--cov=src","--cov-report=html","-q"], "[View Coverage Report](htmlcov/index.html)"),
@@ -194,6 +213,7 @@ def test_run_button_commands(monkeypatch, label, args, link):
     if link:
         assert link in md
 
+# TDD-style tests covering edit_task, sort, and overdue/upcoming logic
 # --- TDD feature tests for edit, sort, overdue/upcoming ---
 @pytest.fixture
 def sample_tasks():
@@ -204,12 +224,14 @@ def sample_tasks():
         {"id":3,"title":"New","description":"D3","priority":"High","category":"Other","due_date":(today+timedelta(days=1)).strftime("%Y-%m-%d"),"completed":False,"created_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")},
     ]
 
+ # Verify edit_task correctly applies updates to a task
 def test_edit_task(sample_tasks):
     updates = {"title":"E","description":"ED","priority":"High","category":"School","due_date":(datetime.now().date()+timedelta(days=5)).strftime("%Y-%m-%d")}
     tasks = edit_task(sample_tasks.copy(), task_id=2, updates=updates)
     t = next(t for t in tasks if t["id"]==2)
     assert t["title"]=="E"
 
+ # Ensure sort_tasks_by_due_date orders tasks ascending/descending
 def test_sort_tasks_by_due_date(sample_tasks):
     asc = sort_tasks_by_due_date(sample_tasks.copy(), ascending=True)
     dates = [t["due_date"] for t in asc]
@@ -217,12 +239,14 @@ def test_sort_tasks_by_due_date(sample_tasks):
     desc = sort_tasks_by_due_date(sample_tasks.copy(), ascending=False)
     assert [t["due_date"] for t in desc] == sorted(dates, reverse=True)
 
+ # Validate get_overdue_tasks and get_upcoming_tasks partition correctly
 def test_get_overdue_and_upcoming(sample_tasks):
     overdue = get_overdue_tasks(sample_tasks.copy())
     upcoming = get_upcoming_tasks(sample_tasks.copy())
     assert {t["id"] for t in overdue} == {1}
     assert {t["id"] for t in upcoming} == {2,3}
 
+# Test that the sidebar form adds a task to storage via show_sidebar
 # --- Sidebar form integration test ---
 class FS:
     def __enter__(self): return self
@@ -233,6 +257,7 @@ class FS:
     def date_input(self, *a, **k): return date.today()
     def form_submit_button(self, *a, **k): return True
 
+ # Confirm show_sidebar writes a new task based on form inputs
 def test_show_sidebar_integration(tmp_path, monkeypatch):
     # Setup file and state
     fp = tmp_path / "tasks.json"
@@ -256,7 +281,9 @@ def test_show_sidebar_integration(tmp_path, monkeypatch):
     assert len(saved) == 1
     assert state.tasks and state.tasks[0]["title"] == "T"
 
+# Test standalone run_* functions execute correct commands
 # --- Run test runner functions ---
+ # Ensure run_unit_tests, run_cov_tests, etc. call subprocess correctly
 def test_run_helpers(monkeypatch):
     calls = []
     md = []
@@ -277,7 +304,9 @@ def test_run_helpers(monkeypatch):
     app_module.run_bdd_tests()
     assert calls[-1] == ["pytest", "-q", "tests/feature"]
 
+# Cover show_filters UI logic returns correct filter tuple
 # --- show_filters coverage ---
+ # Verify show_filters returns selected category, priority, and completed flag
 def test_show_filters(monkeypatch):
     # stub UI
     monkeypatch.setattr(app_module.st, "columns", lambda *a,**k: (DummyCM(), DummyCM()))
@@ -287,7 +316,9 @@ def test_show_filters(monkeypatch):
     result = app_module.show_filters([])
     assert result == ("CatVal","PriVal",True)
 
+# Confirm render_task outputs markdown and buttons for tasks
 # --- render_task coverage ---
+ # Test render_task markup for normal and overdue tasks
 def test_render_task(monkeypatch):
     calls = []
     monkeypatch.setattr(app_module.st, "markdown", lambda txt, **k: calls.append(("md", txt)))
@@ -301,7 +332,9 @@ def test_render_task(monkeypatch):
     app_module.render_task(task, overdue=True)
     assert any(c[0]=="md" and "overdue" in c[1] for c in calls)
 
+# Confirm display_tasks lists tasks with proper labels and buttons
 # --- display_tasks coverage ---
+ # Ensure display_tasks renders each task title and description
 def test_display_tasks(monkeypatch):
     calls = []
     monkeypatch.setattr(app_module.st, "markdown", lambda txt: calls.append(txt))
@@ -312,7 +345,9 @@ def test_display_tasks(monkeypatch):
     app_module.display_tasks(tasks)
     assert any("Z" in c for c in calls)
 
+# Test that complete_task toggles and delete_task removes a task
 # --- complete_task and delete_task coverage ---
+ # Verify complete_task and delete_task persist changes to storage
 def test_complete_and_delete(tmp_path, monkeypatch):
     fp = tmp_path / "tasks.json"
     tasks_module.save_tasks([{"id":5,"completed":False}], file_path=str(fp))
@@ -326,10 +361,12 @@ def test_complete_and_delete(tmp_path, monkeypatch):
     loaded2 = tasks_module.load_tasks(file_path=str(fp))
     assert loaded2 == []
 
+# Additional tests to cover session_state init and edit flow
 # --- Additional tests for src/app.py coverage ---
 import sys, runpy
 import streamlit as st
 
+ # Ensure import initializes edit_id in session_state
 def test_session_state_initialization(monkeypatch):
     # Simulate fresh import; session_state should get edit_id=None
     class SS: pass
@@ -340,6 +377,7 @@ def test_session_state_initialization(monkeypatch):
     new_app = __import__("src.app", fromlist=[""])
     assert hasattr(new_state, "edit_id") and new_state.edit_id is None
 
+ # Test start_edit and save_edit properly update session_state and storage
 def test_start_and_save_edit(tmp_path, monkeypatch):
     from datetime import datetime
     # Prepare temp tasks file
@@ -386,6 +424,7 @@ def test_start_and_save_edit(tmp_path, monkeypatch):
     assert updated["due_date"] == "2025-02-02"
     assert not hasattr(state, "edit_task_data")
 
+ # Verify main() dispatches to all run_* functions when checkboxes are set
 def test_main_run_selected(monkeypatch):
     calls = []
     # Stub UI and logic components
@@ -417,6 +456,7 @@ def test_main_run_selected(monkeypatch):
     app_module.main()
     assert set(calls) == {"run_unit_tests","run_cov_tests","run_param_tests","run_mock_tests","run_html_report", "run_bdd_tests"}
 
+ # Cover the __main__ import guard running main()
 def test_module_run_main(monkeypatch):
     import sys
     # Ensure no prior src.app module to prevent RuntimeWarning

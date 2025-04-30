@@ -22,14 +22,18 @@ class DummyCM:
     def __enter__(self): return self
     def __exit__(self, exc_type, exc, tb): pass
 
+# Tests for tasks.py: ID generation, filtering, searching, loading, and saving
 # --- tasks.py tests --------------------------------------
 
+ # Ensure generate_unique_id returns 1 when no tasks exist
 def test_generate_unique_id_empty():
     assert generate_unique_id([]) == 1
 
+ # Ensure generate_unique_id returns max existing ID + 1
 def test_generate_unique_id_non_empty():
     assert generate_unique_id([{"id":2},{"id":7}]) == 8
 
+ # Test filtering by priority, category, completion status, and basic search
 def test_filter_and_search_and_completion():
     tasks = [
         {"priority":"H","category":"A","completed":False, "title":"","description":""},
@@ -42,15 +46,18 @@ def test_filter_and_search_and_completion():
     tasks2 = [{"title":"Foo","description":"Bar"}]
     assert search_tasks(tasks2,"foo") == tasks2
 
+ # Verify save_tasks writes JSON and load_tasks reads it back correctly
 def test_load_and_save(tmp_path):
     fp = tmp_path/"t.json"
     data = [{"id":1,"title":"x"}]
     save_tasks(data, file_path=str(fp))
     assert load_tasks(file_path=str(fp)) == data
 
+ # load_tasks should return an empty list if the file does not exist
 def test_load_file_not_found(tmp_path):
     assert load_tasks(file_path=str(tmp_path/"nofile.json")) == []
 
+ # load_tasks should warn and return [] on invalid JSON content
 def test_load_invalid_json(tmp_path, capsys):
     bad = tmp_path/"b.json"
     bad.write_text("###")
@@ -59,6 +66,7 @@ def test_load_invalid_json(tmp_path, capsys):
     assert "invalid JSON" in captured
     assert out == []
 
+ # get_overdue_tasks should return tasks past their due date and not completed
 def test_get_overdue(monkeypatch):
     # freeze time in tasks module
     class FakeDT:
@@ -73,8 +81,10 @@ def test_get_overdue(monkeypatch):
     assert get_overdue_tasks(tasks) == [tasks[0]]
 
 
+# Tests for core pure-logic functions in app.py: building tasks and filters
 # --- app.py pure‑logic tests -----------------------------
 
+ # build_task should assign unique ID and correctly format dates
 def test_build_task_and_id(monkeypatch):
     base = [{"id":5}]
     fake_now = datetime(2025,4,21,8,0,0)
@@ -88,12 +98,14 @@ def test_build_task_and_id(monkeypatch):
     assert t["due_date"] == "2025-06-06"
     assert t["created_at"].startswith("2025-04-21")
 
+ # Validate get_filter_options output and compute_filters passthrough
 def test_filters_and_compute():
     cats, pris = get_filter_options([{"category":"Z"},{"category":"A"}])
     assert cats == ["A","Z"]
     assert pris == ["High","Medium","Low"]
     assert compute_filters("X","Y",True) == ("X","Y",True)
 
+ # decide_task_action should return the correct action based on button states
 @pytest.mark.parametrize("comp,cp,dp,exp", [
     (False, True, False, "complete"),
     (True,  True, False, "undo"),
@@ -103,6 +115,7 @@ def test_filters_and_compute():
 def test_decide(comp,cp,dp,exp):
     assert decide_task_action({"completed":comp}, cp, dp) == exp
 
+ # handle_new_task should add a task and trigger complete/delete operations
 def test_handle_new_task_and_callbacks(tmp_path, monkeypatch):
     # point DEFAULT_TASKS_FILE to tmp file
     fp = tmp_path/"tasks.json"
@@ -118,14 +131,17 @@ def test_handle_new_task_and_callbacks(tmp_path, monkeypatch):
     assert load_tasks(file_path=str(fp)) == []
 
 
+# Streamlit UI tests for sidebar and filter components
 # --- Streamlit UI tests ----------------------------------
 
+ # show_filters should return default "All" settings when no tasks present
 def test_show_filters_ui(monkeypatch):
     monkeypatch.setattr(st, "columns", lambda n: (DummyCM(), DummyCM()))
     monkeypatch.setattr(st, "selectbox", lambda *a,**k: "All")
     monkeypatch.setattr(st, "checkbox", lambda *a,**k: False)
     assert show_filters([]) == ("All","All",False)
 
+ # show_sidebar should not raise errors when rendering empty sidebar form
 def test_show_sidebar_does_not_crash(monkeypatch):
     class FormStub:
         def __enter__(self): return self
@@ -139,8 +155,10 @@ def test_show_sidebar_does_not_crash(monkeypatch):
     show_sidebar([])  # no exception
 
 
+# Tests for display_tasks handling of complete and delete button callbacks
 # --- display_tasks: isolate callbacks --------------------
 
+ # display_tasks should toggle completion and remove tasks upon button click
 def test_display_tasks_complete_and_delete(monkeypatch):
     # Full task dict
     full_task = {
@@ -209,6 +227,7 @@ def test_display_tasks_complete_and_delete(monkeypatch):
         pytest.fail("Delete button did not remove the task as expected")
 
 
+ # main() should execute without errors given stubbed Streamlit functions
 def test_main_runs_without_error(monkeypatch):
     monkeypatch.setattr(st, "title", lambda *a,**k: None)
     monkeypatch.setattr(st, "button", lambda *a,**k: False)
@@ -217,6 +236,7 @@ def test_main_runs_without_error(monkeypatch):
     monkeypatch.setattr(st, "checkbox", lambda *a,**k: False)
     assert main() is None
 
+ # start_edit and save_edit should correctly update session_state for edits
 def test_start_and_save_edit(monkeypatch):
     # prepare session state
     st.session_state.clear()
@@ -247,6 +267,7 @@ def test_start_and_save_edit(monkeypatch):
     assert st.session_state.edit_id is None
     assert all(t["title"] == "X" for t in st.session_state.tasks)
 
+ # render_task should output overdue styling and strikethrough for completed tasks
 def test_render_task_branches(monkeypatch):
     calls = []
     monkeypatch.setattr(st, "columns", lambda *a, **k: (DummyCM(), DummyCM()))
@@ -266,6 +287,7 @@ def test_render_task_branches(monkeypatch):
     assert any("<span" in c for c in calls)
     assert any("~~U~~" in c for c in calls)
 
+ # run_* functions should invoke subprocess.run with the correct pytest commands
 def test_run_helpers(monkeypatch):
     ran, md = [], []
     monkeypatch.setattr(subprocess, "run", lambda cmd: ran.append(cmd))
@@ -284,6 +306,7 @@ def test_run_helpers(monkeypatch):
     assert any("View Coverage Report" in m for m in md)
     assert any("View HTML Report" in m for m in md)
 
+ # show_sidebar should append a new task and display a success message
 def test_show_sidebar_adds_task(monkeypatch):
     class FS:
         def __enter__(self): return self

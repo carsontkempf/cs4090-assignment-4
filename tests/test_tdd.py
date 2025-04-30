@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime, timedelta
 from src.tasks import edit_task, sort_tasks_by_due_date, get_overdue_tasks, get_upcoming_tasks
 
+ # Sample tasks fixture: creates tasks for overdue, today, and upcoming dates
 @pytest.fixture
 def sample_tasks():
     today = datetime.now().date()
@@ -38,6 +39,7 @@ def sample_tasks():
         },
     ]
 
+ # Verify edit_task applies field updates and preserves task ID
 def test_edit_task_updates_fields(sample_tasks):
     updates = {
         "title": "Edited",
@@ -54,21 +56,25 @@ def test_edit_task_updates_fields(sample_tasks):
     assert t["category"] == "School"
     assert t["due_date"] == updates["due_date"]
 
+ # Ensure sort_tasks_by_due_date orders tasks ascending by due_date
 def test_sort_tasks_by_due_date_asc(sample_tasks):
     sorted_tasks = sort_tasks_by_due_date(sample_tasks.copy(), ascending=True)
     dates = [t["due_date"] for t in sorted_tasks]
     assert dates == sorted(dates)
 
+ # Ensure sort_tasks_by_due_date orders tasks descending by due_date
 def test_sort_tasks_by_due_date_desc(sample_tasks):
     sorted_tasks = sort_tasks_by_due_date(sample_tasks.copy(), ascending=False)
     dates = [t["due_date"] for t in sorted_tasks]
     assert dates == sorted(dates, reverse=True)
 
+ # Confirm get_overdue_tasks returns only tasks with past due_date
 def test_get_overdue_tasks(sample_tasks):
     overdue = get_overdue_tasks(sample_tasks.copy())
     assert all(t["due_date"] < datetime.now().date().strftime("%Y-%m-%d") for t in overdue)
     assert {t["id"] for t in overdue} == {1}
 
+ # Confirm get_upcoming_tasks returns tasks due today or in the future
 def test_get_upcoming_tasks(sample_tasks):
     upcoming = get_upcoming_tasks(sample_tasks.copy())
     today_str = datetime.now().date().strftime("%Y-%m-%d")

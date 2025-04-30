@@ -3,6 +3,7 @@ import os
 import subprocess
 import streamlit as st
 from datetime import datetime
+# Insert project root into sys.path to enable importing modules from src/
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.tasks import (
@@ -16,10 +17,11 @@ from src.tasks import (
     sort_tasks_by_due_date,
 )
 
-# Initialize edit state safely
+# Initialize edit_id in session_state to track task being edited
 if not hasattr(st.session_state, "edit_id"):
     st.session_state.edit_id = None
 
+# Begin edit mode: store original task data and remove it from main list
 def start_edit(task_id):
     """Set task to edit and remove original immediately."""
     tasks = st.session_state.tasks
@@ -31,6 +33,7 @@ def start_edit(task_id):
         save_tasks(new_tasks)
     st.session_state.edit_id = task_id
 
+# Save edits to task by updating session_state and writing to file
 def save_edit(task_id):
     """Save edits by reading current form inputs from session_state."""
     prefix = f"edit_{task_id}_"
@@ -61,6 +64,7 @@ def save_edit(task_id):
     if callable(rerun):
         rerun()
 
+# Construct a new task dict with a unique ID and timestamp
 def build_task(tasks, title, description, priority, category, due_date):
     """Construct a task dict with a unique ID and timestamp."""
     return {
@@ -74,6 +78,7 @@ def build_task(tasks, title, description, priority, category, due_date):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
+# Toggle completion status of a task and persist changes
 def complete_task(task_id):
     tasks = load_tasks()
     for t in tasks:
@@ -81,15 +86,18 @@ def complete_task(task_id):
             t["completed"] = not t["completed"]
     save_tasks(tasks)
 
+# Remove a task by ID from storage
 def delete_task(task_id):
     tasks = load_tasks()
     save_tasks([t for t in tasks if t["id"] != task_id])
 
+# Prepare available categories and priorities for UI filters
 def get_filter_options(tasks):
     categories = sorted({task["category"] for task in tasks})
     priorities = ["High", "Medium", "Low"]
     return categories, priorities
 
+# Process sidebar form submission to add a new task
 def handle_new_task(tasks, submitted, title, desc, priority, category, due_date):
     if submitted and title:
         new = build_task(tasks, title, desc, priority, category, due_date)
@@ -99,9 +107,11 @@ def handle_new_task(tasks, submitted, title, desc, priority, category, due_date)
         return new
     return None
 
+# Return filter settings unchanged (placeholder for future logic)
 def compute_filters(selected_category, selected_priority, show_completed):
     return selected_category, selected_priority, show_completed
 
+# Decide action string based on complete/delete button state (unused)
 def decide_task_action(task, complete_pressed, delete_pressed):
     if complete_pressed:
         return "undo" if task.get("completed", False) else "complete"
@@ -109,6 +119,7 @@ def decide_task_action(task, complete_pressed, delete_pressed):
         return "delete"
     return None
 
+# Render the sidebar form for creating tasks
 def show_sidebar(tasks):  # pragma: no cover
     st.sidebar.header("Add New Task")
     form = st.sidebar.form("new_task_form")
@@ -125,6 +136,7 @@ def show_sidebar(tasks):  # pragma: no cover
     if new_task:
         st.sidebar.success("Task added!")
 
+# Render category/priority filters and return user's choices
 def show_filters(tasks):  # pragma: no cover
     col1, col2 = st.columns(2)
     with col1:
@@ -134,6 +146,7 @@ def show_filters(tasks):  # pragma: no cover
     show_done = st.checkbox("Show Completed Tasks")
     return compute_filters(cat, pri, show_done)
 
+# Display a single task entry with action buttons and overdue styling
 def render_task(task, overdue=False):
     cols = st.columns([4, 1])
     with cols[0]:
@@ -169,6 +182,7 @@ def render_task(task, overdue=False):
             args=(task["id"],)
         )
 
+# Render all tasks in a simple list without overdue markup
 def display_tasks(tasks):
     for task in tasks:
         cols = st.columns([4, 1])
@@ -199,6 +213,7 @@ def display_tasks(tasks):
                 args=(task["id"],)
             )
 
+# Execute tests for Unit and show output in a Streamlit expander
 def run_unit_tests():
     cmd = ["pytest", "-q"]
     try:
@@ -218,8 +233,9 @@ def run_unit_tests():
         else:
             st.error("❌ Unit tests failed")
 
+# Execute tests for Coverage and show output in a Streamlit expander
 def run_cov_tests():
-    cmd = ["pytest", "--cov=src", "--cov-report=html", "-q"]
+    cmd = ["pytest", "--cov=src", "--cov-report=term-missing", "--cov-report=html", "-q"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
     except TypeError:
@@ -238,6 +254,7 @@ def run_cov_tests():
             st.error("❌ Coverage tests failed")
     st.markdown("[View Coverage Report](htmlcov/index.html)")
 
+# Execute tests for Parameterized and show output in a Streamlit expander
 def run_param_tests():
     cmd = ["pytest", "tests/test_advanced.py", "-q"]
     try:
@@ -257,6 +274,7 @@ def run_param_tests():
         else:
             st.error("❌ Parameterized tests failed")
 
+# Execute tests for Mock and show output in a Streamlit expander
 def run_mock_tests():
     cmd = ["pytest", "tests/test_advanced.py", "-q"]
     try:
@@ -276,6 +294,7 @@ def run_mock_tests():
         else:
             st.error("❌ Mock tests failed")
 
+# Execute tests for HTML Report and show output in a Streamlit expander
 def run_html_report():
     cmd = ["pytest", "--html=report.html", "--self-contained-html", "-q"]
     try:
@@ -296,6 +315,7 @@ def run_html_report():
             st.error("❌ HTML report generation failed")
     st.markdown("[View HTML Report](report.html)")
 
+# Execute tests for BDD and show output in a Streamlit expander
 def run_bdd_tests():
     cmd = ["pytest", "-q", "tests/feature"]
     try:
@@ -315,6 +335,7 @@ def run_bdd_tests():
         else:
             st.error("❌ BDD tests failed")
 
+# Main Streamlit app: initialize state, render UI, and handle actions
 def main():  # pragma: no cover
     # Ensure edit_id exists in session_state for non-dict session_state
     if not hasattr(st.session_state, "edit_id"):
@@ -395,7 +416,7 @@ def main():  # pragma: no cover
         if st.button("Run Unit Tests", key="legacy_unit"):
             subprocess.run(["pytest", "-q"])
         if st.button("Run Coverage", key="legacy_cov"):
-            subprocess.run(["pytest", "--cov=src", "--cov-report=html", "-q"])
+            subprocess.run(["pytest", "--cov=src", "--cov-report=term-missing", "--cov-report=html", "-q"])
             st.markdown("[View Coverage Report](htmlcov/index.html)")
         if st.button("Run Param Tests", key="legacy_param"):
             subprocess.run(["pytest", "tests/test_advanced.py", "-q"])
